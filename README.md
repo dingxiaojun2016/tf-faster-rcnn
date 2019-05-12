@@ -1,5 +1,5 @@
 # 目的
-为了学习以及分享个人学习心得，会在该仓库中添加一些的readme说明进行模块讲解和代码分析，以及实际训练和测试过程。个人拓展说明放在原作者README.md最后https://github.com/zhaocc1106/tf-faster-rcnn#%E4%B8%AA%E4%BA%BA%E5%AD%A6%E4%B9%A0%E5%92%8C%E5%AE%9E%E8%B7%B5%E8%AE%B0%E5%BD%95 。
+为了学习以及分享个人学习心得，会在该仓库中添加一些的readme说明进行模块讲解和代码分析，以及实际训练和测试过程。个人拓展说明放在原作者README.md最后[个人学习和实践记录](https://github.com/zhaocc1106/tf-faster-rcnn#%E4%B8%AA%E4%BA%BA%E5%AD%A6%E4%B9%A0%E5%92%8C%E5%AE%9E%E8%B7%B5%E8%AE%B0%E5%BD%95) 。
 # tf-faster-rcnn is deprecated:
 For a good and more up-to-date implementation for faster/mask RCNN with multi-gpu support, please see the example in TensorPack [here](https://github.com/tensorpack/tensorpack/tree/master/examples/FasterRCNN).
 
@@ -248,7 +248,7 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
 使用pycharm，为了查看代码和运行方便，我把原作者的代码架构改成了pycharm工程，直接使用pycharm打开根目录即可。
 #### 实践过程
 * 参考原作者的步骤，测试demo程序
-  * 编译lib目录中的cython库，具体说明见https://github.com/zhaocc1106/tf-faster-rcnn/tree/master/lib/nms#%E7%BC%96%E8%AF%91
+  * 编译lib目录中的cython库，具体说明见[nms讲解](https://github.com/zhaocc1106/tf-faster-rcnn/tree/master/lib/nms#%E7%BC%96%E8%AF%91)。
   * 安装coco python api
     ```Shell
     cd data
