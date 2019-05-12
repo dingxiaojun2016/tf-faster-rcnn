@@ -248,8 +248,17 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
 使用pycharm，为了查看代码和运行方便，我把原作者的代码架构改成了pycharm工程，直接使用pycharm打开根目录即可。
 #### 实践过程
 * 参考原作者的步骤，测试demo程序
-  * 下载已经训练好的模型，在如下链接https://drive.google.com/open?id=0B1_fAEgxdnvJSmF3YUlZcHFqWTQ 中找到voc_0712_80k-110k.tgz，下载到本地。
   * 编译lib目录中的cython库，具体说明见https://github.com/zhaocc1106/tf-faster-rcnn/tree/master/lib/nms#%E7%BC%96%E8%AF%91
+  * 安装coco python api
+  ```Shell
+  cd data
+  git clone https://github.com/pdollar/coco.git
+  cd coco/PythonAPI
+  make all
+  make install # 我本地把coco python api 安装了一下，为了方便pycharm工程导入这些api。
+  cd ../../..
+  ```
+  * 下载已经训练好的模型，在如下链接https://drive.google.com/open?id=0B1_fAEgxdnvJSmF3YUlZcHFqWTQ 中找到voc_0712_80k-110k.tgz，下载到本地。
   * 将模型参数saver放到特定目录，创建符号链接：
   ```Shell
   NET=res101
@@ -265,3 +274,10 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
   CUDA_VISIBLE_DEVICES=${GPU_ID} ./tools/demo.py
   ```
   或者在pycharm中直接运行demo.py（已经将工程转为pycharm工程）。
+* 参考原作者的步骤，测试test_net程序
+  * 回到代码根目录，mkdir -p VOCdevkit2007/results/VOC2007/Main/
+  * 运行测试脚本
+  ```Shell
+  GPU_ID=0
+  ./experiments/scripts/test_faster_rcnn.sh $GPU_ID pascal_voc_0712 res101
+  ```
