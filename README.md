@@ -288,3 +288,25 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
   GPU_ID=0
   ./experiments/scripts/test_faster_rcnn.sh $GPU_ID pascal_voc_0712 res101
   ```
+  * 实际运行的代码是test_net.py，并且使用VOC2007的测试集来测试已经训练好的模型，运行完结果如下：<br>
+  AP for aeroplane = 0.8303<br>
+  AP for bicycle = 0.8697<br>
+  AP for bird = 0.8133<br>
+  AP for boat = 0.7405<br>
+  AP for bottle = 0.6851<br>
+  AP for bus = 0.8764<br>
+  AP for car = 0.8801<br>
+  AP for cat = 0.8831<br>
+  AP for chair = 0.6247<br>
+  AP for cow = 0.8679<br>
+  AP for diningtable = 0.7061<br>
+  AP for dog = 0.8855<br>
+  AP for horse = 0.8731<br>
+  AP for motorbike = 0.8299<br>
+  AP for person = 0.8270<br>
+  AP for pottedplant = 0.5314<br>
+  AP for sheep = 0.8109<br>
+  AP for sofa = 0.7767<br>
+  AP for train = 0.8369<br>
+  AP for tvmonitor = 0.7936<br>
+  Mean AP = 0.7971
