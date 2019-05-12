@@ -262,6 +262,6 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
   * 运行demo.py
   ```Shell
   GPU_ID=0
-  ./experiments/scripts/test_faster_rcnn.sh $GPU_ID pascal_voc_0712 res101
+  CUDA_VISIBLE_DEVICES=${GPU_ID} ./tools/demo.py
   ```
   或者在pycharm中直接运行demo.py（已经将工程转为pycharm工程）。
