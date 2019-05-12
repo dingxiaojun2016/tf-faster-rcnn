@@ -16,8 +16,8 @@ from tensorflow.contrib.slim.python.slim.nets import resnet_v1
 from tensorflow.contrib.slim.python.slim.nets.resnet_v1 import resnet_v1_block
 import numpy as np
 
-from nets.network import Network
-from model.config import cfg
+from lib.nets.network import Network
+from lib.model.config import cfg
 
 def resnet_arg_scope(is_training=True,
                      batch_norm_decay=0.997,

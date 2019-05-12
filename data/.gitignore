@@ -2,5 +2,6 @@ selective_search*
 imagenet_*
 fast_rcnn_*
 VOCdevkit*
+voc_2007_trainval+voc_2012_trainval*
 coco*
 cache

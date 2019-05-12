@@ -15,20 +15,20 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import _init_paths
-from model.config import cfg
-from model.test import im_detect
-from model.nms_wrapper import nms
+# import _init_paths
+from lib.model.config import cfg
+from lib.model.test import im_detect
+from lib.model.nms_wrapper import nms
 
-from utils.timer import Timer
+from lib.utils.timer import Timer
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
 import os, cv2
 import argparse
 
-from nets.vgg16 import vgg16
-from nets.resnet_v1 import resnetv1
+from lib.nets.vgg16 import vgg16
+from lib.nets.resnet_v1 import resnetv1
 
 CLASSES = ('__background__',
            'aeroplane', 'bicycle', 'bird', 'boat',
@@ -117,8 +117,8 @@ if __name__ == '__main__':
     # model path
     demonet = args.demo_net
     dataset = args.dataset
-    tfmodel = os.path.join('output', demonet, DATASETS[dataset][0], 'default',
-                              NETS[demonet][0])
+    tfmodel = os.path.join('..', 'output', demonet, DATASETS[dataset][0],
+                           'default', NETS[demonet][0])
 
 
     if not os.path.isfile(tfmodel + '.meta'):

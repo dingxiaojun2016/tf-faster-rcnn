@@ -14,14 +14,14 @@ from tensorflow.contrib.slim import arg_scope
 
 import numpy as np
 
-from layer_utils.snippets import generate_anchors_pre, generate_anchors_pre_tf
-from layer_utils.proposal_layer import proposal_layer, proposal_layer_tf
-from layer_utils.proposal_top_layer import proposal_top_layer, proposal_top_layer_tf
-from layer_utils.anchor_target_layer import anchor_target_layer
-from layer_utils.proposal_target_layer import proposal_target_layer
-from utils.visualization import draw_bounding_boxes
+from lib.layer_utils.snippets import generate_anchors_pre, generate_anchors_pre_tf
+from lib.layer_utils.proposal_layer import proposal_layer, proposal_layer_tf
+from lib.layer_utils.proposal_top_layer import proposal_top_layer, proposal_top_layer_tf
+from lib.layer_utils.anchor_target_layer import anchor_target_layer
+from lib.layer_utils.proposal_target_layer import proposal_target_layer
+from lib.utils.visualization import draw_bounding_boxes
 
-from model.config import cfg
+from lib.model.config import cfg
 
 class Network(object):
   def __init__(self):
