@@ -290,6 +290,7 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
     ./experiments/scripts/test_faster_rcnn.sh $GPU_ID pascal_voc_0712 res101
     ```
   * 实际运行的代码是test_net.py，并且指定使用VOC2007的测试集来测试已经训练好的res101-faster-rcnn模型，运行完结果如下：<br>
+    ```
     AP for aeroplane = 0.8303<br>
     AP for bicycle = 0.8697<br>
     AP for bird = 0.8133<br>
@@ -311,6 +312,7 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
     AP for train = 0.8369<br>
     AP for tvmonitor = 0.7936<br>
     Mean AP = 0.7971
+    ```
     <br><br>
 * 参考原作者的步骤，训练和测试faster-rcnn模型
   * 下载vgg16预训练模型
