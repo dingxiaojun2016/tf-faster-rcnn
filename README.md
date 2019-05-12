@@ -243,7 +243,7 @@ For convenience, here is the faster RCNN citation:
 
 ### 个人学习和实践记录
 #### 开发环境
-ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1(安装过程见)
+ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
 #### IDE
 使用pycharm，为了查看代码和运行方便，我把原作者的代码架构改成了pycharm工程，直接使用pycharm打开根目录即可。
 #### 实践过程
