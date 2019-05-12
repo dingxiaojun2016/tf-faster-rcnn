@@ -28,14 +28,15 @@ RCNN会从一张图片中找出n个可能是物体的矩形框，然后为每个
 * 先安装cuda+cudnn环境，如下是我个人安装过程和遇到的坑，不同环境遇到的问题会不同，确保环境完全安装好并检查通过。<br>
     https://blog.csdn.net/zcc450959507/article/details/89672332
 * 修改setup.py脚本中gpu -arch参数，参考如下：(nvdia官网如下链接能找到对应的架构https://developer.nvidia.com/cuda-gpus )<br>
-  | GPU model  | Architecture |<br>
-  | ------------- | ------------- |<br>
-  | TitanX (Maxwell/Pascal) | sm_52 |<br>
-  | GTX 960M | sm_50 |<br>
-  | GTX 1080 (Ti) | sm_61 |<br>
-  | GTX 1070 | sm_61 |<br>
-  | Grid K520 (AWS g2.2xlarge) | sm_30 |<br>
-  | Tesla K80 (AWS p2.xlarge) | sm_37 |<br>
+
+  | GPU model  | Architecture |
+  | ------------- | ------------- |
+  | TitanX (Maxwell/Pascal) | sm_52 |
+  | GTX 960M | sm_50 |
+  | GTX 1080 (Ti) | sm_61 |
+  | GTX 1070 | sm_61 |
+  | Grid K520 (AWS g2.2xlarge) | sm_30 |
+  | Tesla K80 (AWS p2.xlarge) | sm_37 |
 
 * 根据setup.py代码，需要设置一下cuda home环境变量：<br>
     export CUDAHOME="/usr/local/cuda"<br>
