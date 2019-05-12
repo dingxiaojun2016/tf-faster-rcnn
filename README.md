@@ -1,5 +1,5 @@
 # 目的
-为了学习以及分享个人学习心得，会在该仓库中添加一些的readme进行模块讲解和代码分析，以及实际训练和测试过程。
+为了学习以及分享个人学习心得，会在该仓库中添加一些的readme说明进行模块讲解和代码分析，以及实际训练和测试过程。个人拓展说明放在原作者README.md最后。
 # tf-faster-rcnn is deprecated:
 For a good and more up-to-date implementation for faster/mask RCNN with multi-gpu support, please see the example in TensorPack [here](https://github.com/tensorpack/tensorpack/tree/master/examples/FasterRCNN).
 
