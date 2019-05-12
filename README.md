@@ -274,7 +274,8 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
     CUDA_VISIBLE_DEVICES=${GPU_ID} ./tools/demo.py
     ```
   或者在pycharm中直接运行demo.py（已经将工程转为pycharm工程）。
-* 参考原作者的步骤，测试test_net程序
+  <br><br>
+* 参考原作者的步骤，测试已训练好的faster-rcnn模型
   * 下载VOC2007训练和测试数据集<br>
   进官网中看下数据集介绍：<br>
   http://host.robots.ox.ac.uk/pascal/VOC/voc2007/index.html <br>
@@ -288,25 +289,45 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
     GPU_ID=0
     ./experiments/scripts/test_faster_rcnn.sh $GPU_ID pascal_voc_0712 res101
     ```
-  * 实际运行的代码是test_net.py，并且使用VOC2007的测试集来测试已经训练好的模型，运行完结果如下：<br>
-  AP for aeroplane = 0.8303<br>
-  AP for bicycle = 0.8697<br>
-  AP for bird = 0.8133<br>
-  AP for boat = 0.7405<br>
-  AP for bottle = 0.6851<br>
-  AP for bus = 0.8764<br>
-  AP for car = 0.8801<br>
-  AP for cat = 0.8831<br>
-  AP for chair = 0.6247<br>
-  AP for cow = 0.8679<br>
-  AP for diningtable = 0.7061<br>
-  AP for dog = 0.8855<br>
-  AP for horse = 0.8731<br>
-  AP for motorbike = 0.8299<br>
-  AP for person = 0.8270<br>
-  AP for pottedplant = 0.5314<br>
-  AP for sheep = 0.8109<br>
-  AP for sofa = 0.7767<br>
-  AP for train = 0.8369<br>
-  AP for tvmonitor = 0.7936<br>
-  Mean AP = 0.7971
+  * 实际运行的代码是test_net.py，并且指定使用VOC2007的测试集来测试已经训练好的res101-faster-rcnn模型，运行完结果如下：<br>
+    AP for aeroplane = 0.8303<br>
+    AP for bicycle = 0.8697<br>
+    AP for bird = 0.8133<br>
+    AP for boat = 0.7405<br>
+    AP for bottle = 0.6851<br>
+    AP for bus = 0.8764<br>
+    AP for car = 0.8801<br>
+    AP for cat = 0.8831<br>
+    AP for chair = 0.6247<br>
+    AP for cow = 0.8679<br>
+    AP for diningtable = 0.7061<br>
+    AP for dog = 0.8855<br>
+    AP for horse = 0.8731<br>
+    AP for motorbike = 0.8299<br>
+    AP for person = 0.8270<br>
+    AP for pottedplant = 0.5314<br>
+    AP for sheep = 0.8109<br>
+    AP for sofa = 0.7767<br>
+    AP for train = 0.8369<br>
+    AP for tvmonitor = 0.7936<br>
+    Mean AP = 0.7971
+    <br><br>
+* 参考原作者的步骤，训练和测试faster-rcnn模型
+  * 下载vgg16预训练模型
+    ```Shell
+     mkdir -p data/imagenet_weights
+     cd data/imagenet_weights
+     wget -v http://download.tensorflow.org/models/vgg_16_2016_08_28.tar.gz
+     tar -xzvf vgg_16_2016_08_28.tar.gz
+     mv vgg_16.ckpt vgg16.ckpt
+     cd ../..
+     ```
+   * 执行训练脚本
+     ```Shell
+     ./experiments/scripts/train_faster_rcnn.sh [GPU_ID] [DATASET] [NET]
+     # GPU_ID is the GPU you want to test on
+     # DATASET {pascal_voc, pascal_voc_0712, coco} is defined in train_faster_rcnn.sh
+     # NET in {vgg16, res50, res101, res152} is the network arch to use
+     ./experiments/scripts/train_faster_rcnn.sh 0 pascal_voc vgg16
+     ```
+   * 实际执行trainval_net.py和test_net.py程序，并且指定使用VOC2007数据集来训练和测试vgg16-faster-rcnn模型。
