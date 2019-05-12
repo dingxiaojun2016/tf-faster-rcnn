@@ -313,7 +313,7 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
     AP for tvmonitor = 0.7936<br>
     Mean AP = 0.7971
     ```
-    <br><br>
+    <br>
 * 参考原作者的步骤，训练和测试faster-rcnn模型
   * 下载vgg16预训练模型
     ```Shell
