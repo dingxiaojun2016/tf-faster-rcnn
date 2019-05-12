@@ -240,3 +240,28 @@ For convenience, here is the faster RCNN citation:
         Booktitle = {Advances in Neural Information Processing Systems ({NIPS})},
         Year = {2015}
     }
+
+### 个人学习和实践记录
+#### 开发环境
+ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1(安装过程见)
+#### IDE
+使用pycharm，为了查看代码和运行方便，我把原作者的代码架构改成了pycharm工程，直接使用pycharm打开根目录即可。
+#### 实践过程
+* 参考原作者的步骤，测试demo程序
+  * 下载已经训练好的模型，在如下链接(https://drive.google.com/open?id=0B1_fAEgxdnvJSmF3YUlZcHFqWTQ)中找到voc_0712_80k-110k.tgz，下载到本地。
+  * 编译lib目录中的cython库，具体说明见https://github.com/zhaocc1106/tf-faster-rcnn/tree/master/lib/nms#%E7%BC%96%E8%AF%91
+  * 将模型参数saver放到特定目录，创建符号链接：
+  ```Shell
+  NET=res101
+  TRAIN_IMDB=voc_2007_trainval+voc_2012_trainval
+  mkdir -p output/${NET}/${TRAIN_IMDB}
+  cd output/${NET}/${TRAIN_IMDB}
+  ln -s ../../../data/voc_2007_trainval+voc_2012_trainval ./default
+  cd ../../..
+  ```
+  * 运行demo.py
+  ```Shell
+  GPU_ID=0
+  ./experiments/scripts/test_faster_rcnn.sh $GPU_ID pascal_voc_0712 res101
+  ```
+  或者在pycharm中直接运行demo.py（已经将工程转为pycharm工程）。
