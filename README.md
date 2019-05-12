@@ -275,7 +275,14 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
   ```
   或者在pycharm中直接运行demo.py（已经将工程转为pycharm工程）。
 * 参考原作者的步骤，测试test_net程序
-  * 回到代码根目录，mkdir -p VOCdevkit2007/results/VOC2007/Main/
+  * 下载VOC2007训练和测试数据集<br>
+  进官网中看下数据集介绍：<br>
+  http://host.robots.ox.ac.uk/pascal/VOC/voc2007/index.html <br>
+  下载训练和测试数据集：<br>
+  http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtrainval_06-Nov-2007.tar <br>
+  http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtest_06-Nov-2007.tar
+  * 下载好后，两个VOC2007数据集目录合并，放到data/VOCdevkit2007目录。
+  * 回到代码根目录，mkdir -p data/VOCdevkit2007/results/VOC2007/Main/
   * 运行测试脚本
   ```Shell
   GPU_ID=0
