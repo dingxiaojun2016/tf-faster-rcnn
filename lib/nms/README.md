@@ -25,10 +25,20 @@ RCNN会从一张图片中找出n个可能是物体的矩形框，然后为每个
     更高效很多。
 * 其他c文件和so库均为cython转换自动生成的，不需要关心。
 ## 编译
-* 先安装cuda+cudnn环境，如下是我个人安装过程和遇到的坑，不同环境遇到的问题会不同。<br>
+* 先安装cuda+cudnn环境，如下是我个人安装过程和遇到的坑，不同环境遇到的问题会不同，确保环境完全安装好并检查通过。<br>
     https://blog.csdn.net/zcc450959507/article/details/89672332
-* 环境完全安装好并检查通过后，根据setup.py代码，需要设置一下cuda home环境变量：<br>
+* 修改setup.py脚本中gpu -arch参数，参考如下：(nvdia官网如下链接能找到对应的架构https://developer.nvidia.com/cuda-gpus )<br>
+  | GPU model  | Architecture |<br>
+  | ------------- | ------------- |<br>
+  | TitanX (Maxwell/Pascal) | sm_52 |<br>
+  | GTX 960M | sm_50 |<br>
+  | GTX 1080 (Ti) | sm_61 |<br>
+  | GTX 1070 | sm_61 |<br>
+  | Grid K520 (AWS g2.2xlarge) | sm_30 |<br>
+  | Tesla K80 (AWS p2.xlarge) | sm_37 |<br>
+
+* 根据setup.py代码，需要设置一下cuda home环境变量：<br>
     export CUDAHOME="/usr/local/cuda"<br>
-    在lib根目录，执行make all，就会生成cython文件对应的c源文件和运行so库。
+    在lib根目录，执行make clean && make all，就会生成cython文件对应的c源文件和运行so库。
 ## 代码分析
 * pending...
