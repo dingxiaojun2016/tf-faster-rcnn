@@ -92,8 +92,10 @@ if __name__ == '__main__':
   print(args)
 
   if args.cfg_file is not None:
+    # load config from yml file.
     cfg_from_file(args.cfg_file)
   if args.set_cfgs is not None:
+    # load config from --set args.
     cfg_from_list(args.set_cfgs)
 
   print('Using config:')
