@@ -291,26 +291,26 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
     ```
   * 实际运行的代码是test_net.py，并且指定使用VOC2007的测试集来测试已经训练好的res101-faster-rcnn模型，运行完结果如下：<br>
     ```
-    AP for aeroplane = 0.8303<br>
-    AP for bicycle = 0.8697<br>
-    AP for bird = 0.8133<br>
-    AP for boat = 0.7405<br>
-    AP for bottle = 0.6851<br>
-    AP for bus = 0.8764<br>
-    AP for car = 0.8801<br>
-    AP for cat = 0.8831<br>
-    AP for chair = 0.6247<br>
-    AP for cow = 0.8679<br>
-    AP for diningtable = 0.7061<br>
-    AP for dog = 0.8855<br>
-    AP for horse = 0.8731<br>
-    AP for motorbike = 0.8299<br>
-    AP for person = 0.8270<br>
-    AP for pottedplant = 0.5314<br>
-    AP for sheep = 0.8109<br>
-    AP for sofa = 0.7767<br>
-    AP for train = 0.8369<br>
-    AP for tvmonitor = 0.7936<br>
+    AP for aeroplane = 0.8303
+    AP for bicycle = 0.8697
+    AP for bird = 0.8133
+    AP for boat = 0.7405
+    AP for bottle = 0.6851
+    AP for bus = 0.8764
+    AP for car = 0.8801
+    AP for cat = 0.8831
+    AP for chair = 0.6247
+    AP for cow = 0.8679
+    AP for diningtable = 0.7061
+    AP for dog = 0.8855
+    AP for horse = 0.8731
+    AP for motorbike = 0.8299
+    AP for person = 0.8270
+    AP for pottedplant = 0.5314
+    AP for sheep = 0.8109
+    AP for sofa = 0.7767
+    AP for train = 0.8369
+    AP for tvmonitor = 0.7936
     Mean AP = 0.7971
     ```
     <br>
@@ -332,4 +332,27 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
      # NET in {vgg16, res50, res101, res152} is the network arch to use
      ./experiments/scripts/train_faster_rcnn.sh 0 pascal_voc vgg16
      ```
-   * 实际执行trainval_net.py和test_net.py程序，并且指定使用VOC2007数据集来训练和测试vgg16-faster-rcnn模型。
+   * 实际执行trainval_net.py和test_net.py程序，并且指定使用VOC2007数据集来训练和测试vgg16-faster-rcnn模型，运行完结果如下：<br>
+     ```
+     AP for aeroplane = 0.6968
+     AP for bicycle = 0.7873
+     AP for bird = 0.7050
+     AP for boat = 0.6009
+     AP for bottle = 0.5785
+     AP for bus = 0.7850
+     AP for car = 0.8302
+     AP for cat = 0.8435
+     AP for chair = 0.5122
+     AP for cow = 0.7476
+     AP for diningtable = 0.6596
+     AP for dog = 0.8117
+     AP for horse = 0.8370
+     AP for motorbike = 0.7428
+     AP for person = 0.7827
+     AP for pottedplant = 0.4434
+     AP for sheep = 0.7119
+     AP for sofa = 0.6474
+     AP for train = 0.7489
+     AP for tvmonitor = 0.7233
+     Mean AP = 0.7098
+     ```
