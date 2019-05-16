@@ -271,6 +271,7 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
   * 运行demo.py
     ```Shell
     GPU_ID=0
+    export PYTHONPATH=$PYTHONPATH:./
     CUDA_VISIBLE_DEVICES=${GPU_ID} ./tools/demo.py
     ```
   或者在pycharm中直接运行demo.py（已经将工程转为pycharm工程）。
@@ -287,6 +288,7 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
   * 运行测试脚本
     ```Shell
     GPU_ID=0
+    export PYTHONPATH=$PYTHONPATH:./
     ./experiments/scripts/test_faster_rcnn.sh $GPU_ID pascal_voc_0712 res101
     ```
   * 实际运行的代码是test_net.py，并且指定使用VOC2007的测试集来测试已经训练好的res101-faster-rcnn模型，运行完结果如下：<br>
@@ -330,6 +332,7 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
      # GPU_ID is the GPU you want to test on
      # DATASET {pascal_voc, pascal_voc_0712, coco} is defined in train_faster_rcnn.sh
      # NET in {vgg16, res50, res101, res152} is the network arch to use
+     export PYTHONPATH=$PYTHONPATH:./
      ./experiments/scripts/train_faster_rcnn.sh 0 pascal_voc vgg16
      ```
    * 实际执行trainval_net.py和test_net.py程序，并且指定使用VOC2007数据集来训练和测试vgg16-faster-rcnn模型，运行完结果如下：<br>
