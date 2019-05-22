@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------
 # Tensorflow Faster R-CNN
 # Licensed under The MIT License [see LICENSE for details]
@@ -46,6 +47,8 @@ def resnet_arg_scope(is_training=True,
 class resnetv1(Network):
   def __init__(self, num_layers=50):
     Network.__init__(self)
+    # conv1(feet_stride:2) * pool1(feet_stride:2) * block1(feet_stride:2) *
+    # block2(feet_stride:2) * block3(feet_stride:1) = 16
     self._feat_stride = [16, ]
     self._feat_compress = [1. / float(self._feat_stride[0]), ]
     self._num_layers = num_layers
@@ -88,8 +91,11 @@ class resnetv1(Network):
   def _image_to_head(self, is_training, reuse=None):
     assert (0 <= cfg.RESNET.FIXED_BLOCKS <= 3)
     # Now the base is always fixed during training
+    # conv1 和 pool1的参数不被训练
     with slim.arg_scope(resnet_arg_scope(is_training=False)):
       net_conv = self._build_base()
+
+    # block1的参数不被训练
     if cfg.RESNET.FIXED_BLOCKS > 0:
       with slim.arg_scope(resnet_arg_scope(is_training=False)):
         net_conv, _ = resnet_v1.resnet_v1(net_conv,
@@ -98,6 +104,8 @@ class resnetv1(Network):
                                            include_root_block=False,
                                            reuse=reuse,
                                            scope=self._scope)
+
+    # block2 block3参数设置为训练
     if cfg.RESNET.FIXED_BLOCKS < 3:
       with slim.arg_scope(resnet_arg_scope(is_training=is_training)):
         net_conv, _ = resnet_v1.resnet_v1(net_conv,

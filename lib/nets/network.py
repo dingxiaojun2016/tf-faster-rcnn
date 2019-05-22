@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------
 # Tensorflow Faster R-CNN
 # Licensed under The MIT License [see LICENSE for details]
@@ -209,9 +210,16 @@ class Network(object):
 
   def _anchor_component(self):
     with tf.variable_scope('ANCHOR_' + self._tag) as scope:
-      # just to get the shape right
+      """
+      just to get the shape right. Get the feature map(block3-out) shape.
+      根据总stride（conv1->block3-out）16，计算feature map的宽高
+      总stride(16) = conv1-stride(2) * pool1-stride(2) * block1-stride(2) * block2-stride(2) * block3-stride(1)
+      比如224 / 16 = 14
+      """
       height = tf.to_int32(tf.ceil(self._im_info[0] / np.float32(self._feat_stride[0])))
       width = tf.to_int32(tf.ceil(self._im_info[1] / np.float32(self._feat_stride[0])))
+
+      # 如果是端到端模型
       if cfg.USE_E2E_TF:
         anchors, anchor_length = generate_anchors_pre_tf(
           height,
@@ -398,6 +406,7 @@ class Network(object):
     self._anchor_ratios = anchor_ratios
     self._num_ratios = len(anchor_ratios)
 
+    # anchor and ratios combined to recommend boxes.
     self._num_anchors = self._num_scales * self._num_ratios
 
     training = mode == 'TRAIN'
