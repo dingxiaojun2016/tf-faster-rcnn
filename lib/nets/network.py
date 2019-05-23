@@ -81,8 +81,12 @@ class Network(object):
   def _softmax_layer(self, bottom, name):
     if name.startswith('rpn_cls_prob_reshape'):
       input_shape = tf.shape(bottom)
+
+      # softmax需要针对几类，所以把bottom reshape成2维，并且第二维是2，代表有2类，第一维代表有多少组数据需要分类，即总共的anchors的数量。
       bottom_reshaped = tf.reshape(bottom, [-1, input_shape[-1]])
       reshaped_score = tf.nn.softmax(bottom_reshaped, name=name)
+
+      # 恢复一下shape
       return tf.reshape(reshaped_score, input_shape)
     return tf.nn.softmax(bottom, name=name)
 
@@ -221,6 +225,8 @@ class Network(object):
 
       # 如果是端到端模型
       if cfg.USE_E2E_TF:
+        # 为当前最后一层的feature map中的所有像素点（像素点的选取顺序是从第一行开始自左到右的方向，处理完一行后自上到下进入下一行）生成映
+        # 射回原始图中的所有anchors。
         anchors, anchor_length = generate_anchors_pre_tf(
           height,
           width,
@@ -329,17 +335,86 @@ class Network(object):
     return loss
 
   def _region_proposal(self, net_conv, is_training, initializer):
+    # 增加一个rpn卷积层
     rpn = slim.conv2d(net_conv, cfg.RPN_CHANNELS, [3, 3], trainable=is_training, weights_initializer=initializer,
                         scope="rpn_conv/3x3")
     self._act_summaries.append(rpn)
+
+    """
+    使用kernel size为1的卷积层来当做全连接层，全连接层的输出为anchors个数的2倍，即代表一个anchor可以是一个物体或者不是一个物体两类。
+    用于分类学习。
+    下边以一个例子来分析后边每一步的变化，假设rpn_cls_score为如下值：
+    array([[[[ 0,  1,  2,  3],
+             [ 4,  5,  6,  7]],
+            [[ 8,  9, 10, 11],
+             [12, 13, 14, 15]]]])
+    shape为(1, 2, 2, 4)，这里的每个点的anchor个数为2，总共有4个像素点，以第一行为例，第一行就代表第一个像素点对应的2个anchors“是物体”
+    和“非物体”的logits，即0和1代表两个anchors是“非物体”的logit，2和3代表两个anchors“是物体”的logit。
+    """
     rpn_cls_score = slim.conv2d(rpn, self._num_anchors * 2, [1, 1], trainable=is_training,
                                 weights_initializer=initializer,
                                 padding='VALID', activation_fn=None, scope='rpn_cls_score')
-    # change it so that the score has 2 as its channel size
+
+    """
+    1)
+    change it so that the score has 2 as its channel size
+    接着上边的例子，rpn_cls_score_reshape为：
+    array([[[[ 0,  2],
+             [ 4,  6]],
+            [[ 8, 10],
+             [12, 14]],
+            [[ 1,  3],
+             [ 5,  7]],
+            [[ 9, 11],
+             [13, 15]]]])
+    shape为(1, 4, 2, 2)，看到reshape过后每一行代表一个anchor“是物体”和“非物体”的logits。
+    """
     rpn_cls_score_reshape = self._reshape_layer(rpn_cls_score, 2, 'rpn_cls_score_reshape')
+
+    """
+    2)
+    为2分类增加softmax层，生成概率。
+    添加softmax层后shape没有变化，rpn_cls_prob_reshape为：
+    array([[[[0.11920292, 0.88079708],
+             [0.11920292, 0.88079708]],
+            [[0.11920292, 0.88079708],
+             [0.11920292, 0.88079708]],
+            [[0.11920292, 0.88079708],
+             [0.11920292, 0.88079708]],
+            [[0.11920292, 0.88079708],
+             [0.11920292, 0.88079708]]]])
+    shape为(1, 4, 2, 2)，看到每一行代表一个anchor“是物体”和“非物体”的概率。
+    比如[0, 2]softmax后就是[0.11920292, 0.88079708]，计算过程：
+    p(非物体) = e^0 / (e^0 + e^2)
+    p(是物体) = e^2 / (e^0 + e^2)
+    """
     rpn_cls_prob_reshape = self._softmax_layer(rpn_cls_score_reshape, "rpn_cls_prob_reshape")
+
+    """
+    3)
+    为2分类softmax层生成prediction。
+    根据上述概率求出分类预测，rpn_cls_pred为：
+    array([1, 1, 1, 1, 1, 1, 1, 1])
+    就是说从上述概率的表述来看，预测每个anchor“是物体”还是“非物体”，当然是概率大的预测。
+    """
     rpn_cls_pred = tf.argmax(tf.reshape(rpn_cls_score_reshape, [-1, 2]), axis=1, name="rpn_cls_pred")
+
+    """
+    4)
+    对第二步生成的概率，再转一下，转成如下格式，rpn_cls_prob为
+    array([[[[0.11920292, 0.11920292, 0.88079708, 0.88079708],
+             [0.11920292, 0.11920292, 0.88079708, 0.88079708]],
+            [[0.11920292, 0.11920292, 0.88079708, 0.88079708],
+             [0.11920292, 0.11920292, 0.88079708, 0.88079708]]]])
+    shape为(1, 2, 2, 4)，这里的概率对应到最初始的rpn_cls_score，以第一行为例，第一行就代表第一个像素点对应的2个anchors是物体和非物体
+    的概率，其中第1,2列分别为该像素点两个anchor是“非物体”的概率，3，4列分别为该像素点两个anchor是“是物体”的概率。
+    """
     rpn_cls_prob = self._reshape_layer(rpn_cls_prob_reshape, self._num_anchors * 2, "rpn_cls_prob")
+
+    """
+    增加一个全连接层，输出是anchors个数的4倍，代表一个anchor的左上角和右下角的坐标，用于回归学习。
+    rpn_bbox_pred的shape = (1, 14, 14, 9*4)
+    """
     rpn_bbox_pred = slim.conv2d(rpn, self._num_anchors * 4, [1, 1], trainable=is_training,
                                 weights_initializer=initializer,
                                 padding='VALID', activation_fn=None, scope='rpn_bbox_pred')
