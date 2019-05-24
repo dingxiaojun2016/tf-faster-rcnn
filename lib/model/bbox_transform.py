@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------
 # Fast R-CNN
 # Copyright (c) 2015 Microsoft
@@ -83,27 +84,57 @@ def clip_boxes(boxes, im_shape):
 
 
 def bbox_transform_inv_tf(boxes, deltas):
+  """根据anchors的原始坐标和经过rpn之后的得到的偏移量deltas，来计算proposal boxes。
+  anchors boxes和deltas和proposal boxes之间的关系如下：
+  假设anchors boxes中心的坐标为(xa, ya)，宽高为wa，ha。
+  假设proposal boxes中心的坐标为(xp, yp)，宽高为wp，hp。
+  则公式如下：
+  dx = (xp - xa) / wa
+  dy = (yp - ya) / ha
+  dw = log(wp / wa)
+  dh = log(hp / ha)
+
+  Args:
+    boxes: anchors boxes
+    deltas: 经过rpn之后的得到的偏移量deltas
+
+  Returns:
+    返回proposal boxes的左上坐标，和右下坐标。
+  """
   boxes = tf.cast(boxes, deltas.dtype)
+
+  # 计算boxes的宽高
   widths = tf.subtract(boxes[:, 2], boxes[:, 0]) + 1.0
   heights = tf.subtract(boxes[:, 3], boxes[:, 1]) + 1.0
+
+
+  """
+  计算boxes的中心坐标，但是这里计算出来的中心坐标有问题？是不是应该下边这样？
+  ctr_x = tf.add(boxes[:, 0], (widths - 1) * 0.5)
+  ctr_y = tf.add(boxes[:, 1], (heights - 1) * 0.5)
+  """
   ctr_x = tf.add(boxes[:, 0], widths * 0.5)
   ctr_y = tf.add(boxes[:, 1], heights * 0.5)
 
+  # 获取坐标、宽高的偏移量
   dx = deltas[:, 0]
   dy = deltas[:, 1]
   dw = deltas[:, 2]
   dh = deltas[:, 3]
 
+  # 根据转换公式，通过偏移量和anchors中心坐标和宽高计算proposal的中心坐标和宽高
   pred_ctr_x = tf.add(tf.multiply(dx, widths), ctr_x)
   pred_ctr_y = tf.add(tf.multiply(dy, heights), ctr_y)
   pred_w = tf.multiply(tf.exp(dw), widths)
   pred_h = tf.multiply(tf.exp(dh), heights)
 
+  # 根据proposal boxes的中心坐标和宽高来计算proposal boxes的左上和右下坐标
   pred_boxes0 = tf.subtract(pred_ctr_x, pred_w * 0.5)
   pred_boxes1 = tf.subtract(pred_ctr_y, pred_h * 0.5)
   pred_boxes2 = tf.add(pred_ctr_x, pred_w * 0.5)
   pred_boxes3 = tf.add(pred_ctr_y, pred_h * 0.5)
 
+  # 将坐标值合成到一个维度中
   return tf.stack([pred_boxes0, pred_boxes1, pred_boxes2, pred_boxes3], axis=1)
 
 

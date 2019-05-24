@@ -412,8 +412,17 @@ class Network(object):
     rpn_cls_prob = self._reshape_layer(rpn_cls_prob_reshape, self._num_anchors * 2, "rpn_cls_prob")
 
     """
-    增加一个全连接层，输出是anchors个数的4倍，代表一个anchor的左上角和右下角的坐标，用于回归学习。
-    rpn_bbox_pred的shape = (1, 14, 14, 9*4)
+    增加一个全连接层，输出是anchors个数的4倍，代表一个proposal boxes相对于anchor boxes的中心坐标和宽高的偏移量，用于回归学习，具体偏移
+    量的解释见bbox_transform中的bbox_transform_inv_tf函数。
+    这里假设rpn_bbox_pred的值如下：
+    array([[[[ 0,  0,  0,  0,  0,  0,  0,  0],
+             [ 0,  0,  0,  0,  0,  0,  0,  0]],
+            [[ 0,  0,  0,  0,  0,  0,  0,  0],
+             [ 0,  0,  0,  0,  0,  0,  0,  0]]]])
+    shape为(1, 2, 2, 8)，即feature map总共有4个像素点，每个像素点有两个anchors，每行代表某个像素点两个anchors经过rpn回归之后得到的
+    proposal boxes相对于anchor boxes的中心坐标和宽高的偏移量。这里为了简单，假设偏移量都为0，即代表proposal boxes和anchors boxes完
+    全一致，第一行的前4个0代表feature map第一个像素点的第一个anchor boxes，经过rpn回归后得到proposal boxes与anchor boxes中心坐标偏
+    移量和宽高偏移量。以此类推。
     """
     rpn_bbox_pred = slim.conv2d(rpn, self._num_anchors * 4, [1, 1], trainable=is_training,
                                 weights_initializer=initializer,
