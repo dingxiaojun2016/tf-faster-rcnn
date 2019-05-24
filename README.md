@@ -272,7 +272,7 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
     ```Shell
     GPU_ID=0
     export PYTHONPATH=$PYTHONPATH:./
-    CUDA_VISIBLE_DEVICES=${GPU_ID} ./tools/demo.py
+    CUDA_VISIBLE_DEVICES=${GPU_ID} ./tools/demo.py --net=res101 --dataset=pascal_voc_0712
     ```
   或者在pycharm中直接运行demo.py（已经将工程转为pycharm工程）。
   <br><br>
@@ -360,6 +360,12 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
      AP for tvmonitor = 0.7233
      Mean AP = 0.7098
      ```
+   * 利用训练好的vgg16-faster-rcnn模型来检测demo中的物体
+     ```Shell
+     GPU_ID=0
+     export PYTHONPATH=$PYTHONPATH:./
+     CUDA_VISIBLE_DEVICES=${GPU_ID} ./tools/demo.py --net=vgg16 --dataset=pascal_voc
+     ```
    * 使用resnet101模型来训练faster-rcnn<br>
    * 下载resnet101预训练模型
      ```Shell
@@ -402,4 +408,16 @@ ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
      AP for train = 0.7839
      AP for tvmonitor = 0.7521
      Mean AP = 0.7477
+     ```
+   * 利用训练好的resnet101-faster-rcnn模型来检测demo中的物体
+     ```
+     这里注意需要修改一下demo.py中的第40行
+     NETS = {'vgg16': ('vgg16_faster_rcnn_iter_70000.ckpt',),'res101': ('res101_faster_rcnn_iter_110000.ckpt',)}
+     改为
+     NETS = {'vgg16': ('vgg16_faster_rcnn_iter_70000.ckpt',),'res101': ('res101_faster_rcnn_iter_70000.ckpt',)}
+     ```
+     ```Shell
+     GPU_ID=0
+     export PYTHONPATH=$PYTHONPATH:./
+     CUDA_VISIBLE_DEVICES=${GPU_ID} ./tools/demo.py --net=res101 --dataset=pascal_voc
      ```
