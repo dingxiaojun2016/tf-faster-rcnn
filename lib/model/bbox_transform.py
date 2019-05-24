@@ -82,7 +82,6 @@ def clip_boxes(boxes, im_shape):
   return boxes
 
 
-
 def bbox_transform_inv_tf(boxes, deltas):
   """根据anchors的原始坐标和经过rpn之后的得到的偏移量deltas，来计算proposal boxes。
   anchors boxes和deltas和proposal boxes之间的关系如下：
@@ -113,8 +112,10 @@ def bbox_transform_inv_tf(boxes, deltas):
   ctr_x = tf.add(boxes[:, 0], (widths - 1) * 0.5)
   ctr_y = tf.add(boxes[:, 1], (heights - 1) * 0.5)
   """
-  ctr_x = tf.add(boxes[:, 0], widths * 0.5)
-  ctr_y = tf.add(boxes[:, 1], heights * 0.5)
+  # ctr_x = tf.add(boxes[:, 0], widths * 0.5)
+  # ctr_y = tf.add(boxes[:, 1], heights * 0.5)
+  ctr_x = tf.add(boxes[:, 0], (widths - 1) * 0.5)
+  ctr_y = tf.add(boxes[:, 1], (heights - 1) * 0.5)
 
   # 获取坐标、宽高的偏移量
   dx = deltas[:, 0]

@@ -117,17 +117,35 @@ def proposal_layer_tf(rpn_cls_prob, rpn_bbox_pred, im_info, cfg_key, _feat_strid
   计算中心坐标过程有点问题。但是可能影响比较小吧。
   """
   proposals = bbox_transform_inv_tf(anchors, rpn_bbox_pred)
+
+  """
+  通过分析minibatch.py可得im_info由三个数组成，分别为高，宽和缩放比例。
+  上边得到了proposal boxes的坐标描述，但是为了限制在图片内，所以需要把坐标跟宽高进行比较。
+  使得x坐标满足：
+  0<= x <= w
+  使得y坐标满足：
+  0<= y <= h
+  """
   proposals = clip_boxes_tf(proposals, im_info[:2])
 
-  # Non-maximal suppression
+  """
+  Non-maximal suppression
+  通过非极大抑制算法减少一些重叠度比较大的proposal boxes，关于非极大抑制算法见lib/nms/的readme。
+  """
   indices = tf.image.non_max_suppression(proposals, scores, max_output_size=post_nms_topN, iou_threshold=nms_thresh)
 
+  """
+  根据非极大抑制算法算出来的需要保留的proposal boxes indices缩减一下proposals和socres。
+  """
   boxes = tf.gather(proposals, indices)
   boxes = tf.to_float(boxes)
   scores = tf.gather(scores, indices)
   scores = tf.reshape(scores, shape=(-1, 1))
 
-  # Only support single image as input
+  """
+  Only support single image as input
+  在proposal boxes前加一列0？接着下面分析看前面一列0的用途。
+  """
   batch_inds = tf.zeros((tf.shape(indices)[0], 1), dtype=tf.float32)
   blob = tf.concat([batch_inds, boxes], 1)
 

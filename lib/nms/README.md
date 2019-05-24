@@ -42,4 +42,4 @@ RCNN会从一张图片中找出n个可能是物体的矩形框，然后为每个
     export CUDAHOME="/usr/local/cuda"<br>
     在lib根目录，执行make clean && make all，就会生成cython文件对应的c源文件和运行so库。
 ## 代码分析
-* pending...
+* 目前分析了python直接编写的nms算法和通过cython编写的nms算法，具体过程见源代码文件。
