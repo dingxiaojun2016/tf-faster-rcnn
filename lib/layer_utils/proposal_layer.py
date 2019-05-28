@@ -135,7 +135,7 @@ def proposal_layer_tf(rpn_cls_prob, rpn_bbox_pred, im_info, cfg_key, _feat_strid
   indices = tf.image.non_max_suppression(proposals, scores, max_output_size=post_nms_topN, iou_threshold=nms_thresh)
 
   """
-  根据非极大抑制算法算出来的需要保留的proposal boxes indices缩减一下proposals和socres。
+  根据非极大抑制算法算出来的需要保留的proposal boxes indices缩减一下proposals和scores。
   """
   boxes = tf.gather(proposals, indices)
   boxes = tf.to_float(boxes)

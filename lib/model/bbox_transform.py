@@ -5,6 +5,10 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Ross Girshick
 # --------------------------------------------------------
+"""
+bounding-boxes模块，包含anchors与ground truth的偏移量计算；以及由anchors和偏移量计算预测boxes；还有限制boxes在图片尺寸内的计算。
+"""
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -13,16 +17,28 @@ import numpy as np
 import tensorflow as tf
 
 def bbox_transform(ex_rois, gt_rois):
+  """根据anchors和ground truth boxes来计算偏移量，偏移量解释见bbox_transform_inv_tf函数。
+
+  Args:
+    ex_rois: anchors boxes
+    gt_rois: ground truth boxes
+
+  Returns:
+    偏移量
+  """
+  # 获取一下anchors的宽高、中心点坐标
   ex_widths = ex_rois[:, 2] - ex_rois[:, 0] + 1.0
   ex_heights = ex_rois[:, 3] - ex_rois[:, 1] + 1.0
   ex_ctr_x = ex_rois[:, 0] + 0.5 * ex_widths
   ex_ctr_y = ex_rois[:, 1] + 0.5 * ex_heights
 
+  # 获取一下ground truth boxes的宽高，中心点坐标
   gt_widths = gt_rois[:, 2] - gt_rois[:, 0] + 1.0
   gt_heights = gt_rois[:, 3] - gt_rois[:, 1] + 1.0
   gt_ctr_x = gt_rois[:, 0] + 0.5 * gt_widths
   gt_ctr_y = gt_rois[:, 1] + 0.5 * gt_heights
 
+  # 计算一下anchors和ground truth boxes的偏移量，偏移量的具体含义见bbox_transform_inv_tf函数
   targets_dx = (gt_ctr_x - ex_ctr_x) / ex_widths
   targets_dy = (gt_ctr_y - ex_ctr_y) / ex_heights
   targets_dw = np.log(gt_widths / ex_widths)
@@ -34,6 +50,15 @@ def bbox_transform(ex_rois, gt_rois):
 
 
 def bbox_transform_inv(boxes, deltas):
+  """根据anchors和偏移量deltas来计算预测boxes，同bbox_transform正好是个反过程。
+
+  Args:
+    boxes: anchors
+    deltas: 偏移量
+
+  Returns:
+    预测边框
+  """
   if boxes.shape[0] == 0:
     return np.zeros((0, deltas.shape[1]), dtype=deltas.dtype)
 
@@ -67,8 +92,14 @@ def bbox_transform_inv(boxes, deltas):
 
 
 def clip_boxes(boxes, im_shape):
-  """
-  Clip boxes to image boundaries.
+  """将boxes边框限制在image尺寸内。
+
+  Args:
+    boxes: boxes
+    im_shape: image的尺寸描述
+
+  Returns:
+    限制在image尺寸内的boxes
   """
 
   # x1 >= 0
@@ -83,7 +114,8 @@ def clip_boxes(boxes, im_shape):
 
 
 def bbox_transform_inv_tf(boxes, deltas):
-  """根据anchors的原始坐标和经过rpn之后的得到的偏移量deltas，来计算proposal boxes。
+  """ bbox_transform_inv的tensorflow版本。
+  根据anchors的原始坐标和经过rpn之后的得到的偏移量deltas，来计算proposal boxes。
   anchors boxes和deltas和proposal boxes之间的关系如下：
   假设anchors boxes中心的坐标为(xa, ya)，宽高为wa，ha。
   假设proposal boxes中心的坐标为(xp, yp)，宽高为wp，hp。
@@ -140,6 +172,7 @@ def bbox_transform_inv_tf(boxes, deltas):
 
 
 def clip_boxes_tf(boxes, im_info):
+  """clip_boxes的tensorflow版本"""
   b0 = tf.maximum(tf.minimum(boxes[:, 0], im_info[1] - 1), 0)
   b1 = tf.maximum(tf.minimum(boxes[:, 1], im_info[0] - 1), 0)
   b2 = tf.maximum(tf.minimum(boxes[:, 2], im_info[1] - 1), 0)
