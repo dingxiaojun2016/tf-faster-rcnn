@@ -43,3 +43,47 @@ RCNN会从一张图片中找出n个可能是物体的矩形框，然后为每个
     在lib根目录，执行make clean && make all，就会生成cython文件对应的c源文件和运行so库。
 ## 代码分析
 * 目前分析了python直接编写的nms算法和通过cython编写的nms算法，具体过程见源代码文件。
+## 实际测试
+使用不同版本的nms运行demo.py程序对demo图片进行目标检测，运行速度结果如下：<br>
+gpu-nms:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Demo for data/demo/000542.jpg
+Detection took 0.093s for 300 object proposals
+
+Demo for data/demo/001150.jpg
+Detection took 0.099s for 300 object proposals
+
+Demo for data/demo/001763.jpg
+Detection took 0.089s for 300 object proposals
+
+Demo for data/demo/004545.jpg
+Detection took 0.091s for 300 object proposals
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cpu-nms:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Demo for data/demo/000542.jpg
+Detection took 2.466s for 300 object proposals
+
+Demo for data/demo/001150.jpg
+Detection took 2.452s for 300 object proposals
+
+Demo for data/demo/001763.jpg
+Detection took 2.464s for 300 object proposals
+
+Demo for data/demo/004545.jpg
+Detection took 2.470s for 300 object proposals
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pure-python-nms:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Demo for data/demo/000542.jpg
+Detection took 2.443s for 300 object proposals
+
+Demo for data/demo/001150.jpg
+Detection took 2.438s for 300 object proposals
+
+Demo for data/demo/001763.jpg
+Detection took 2.448s for 300 object proposals
+
+Demo for data/demo/004545.jpg
+Detection took 2.467s for 300 object proposal
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

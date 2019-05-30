@@ -122,13 +122,17 @@ class resnetv1(Network):
 
   def _head_to_tail(self, pool5, is_training, reuse=None):
     with slim.arg_scope(resnet_arg_scope(is_training=is_training)):
+      # 在pool5后再增加一层resnet101的block4
       fc7, _ = resnet_v1.resnet_v1(pool5,
                                    self._blocks[-1:],
                                    global_pool=False,
                                    include_root_block=False,
                                    reuse=reuse,
                                    scope=self._scope)
-      # average pooling done by reduce_mean
+      """
+      average pooling done by reduce_mean
+      进行一次average pooling，只不过kernel size为整个feature map，生成full-connected7。
+      """
       fc7 = tf.reduce_mean(fc7, axis=[1, 2])
     return fc7
 

@@ -146,7 +146,11 @@ class Network(object):
   def _crop_pool_layer(self, bottom, rois, name):
     with tf.variable_scope(name) as scope:
       batch_ids = tf.squeeze(tf.slice(rois, [0, 0], [-1, 1], name="batch_id"), [1])
-      # Get the normalized coordinates of bounding boxes
+
+      """
+      Get the normalized coordinates of bounding boxes
+      获取bounding boxes标准化后的坐标，标准化过程见crop_and_resize中boxes参数的解释。
+      """
       bottom_shape = tf.shape(bottom)
       height = (tf.to_float(bottom_shape[1]) - 1.) * np.float32(self._feat_stride[0])
       width = (tf.to_float(bottom_shape[2]) - 1.) * np.float32(self._feat_stride[0])
@@ -154,11 +158,20 @@ class Network(object):
       y1 = tf.slice(rois, [0, 2], [-1, 1], name="y1") / height
       x2 = tf.slice(rois, [0, 3], [-1, 1], name="x2") / width
       y2 = tf.slice(rois, [0, 4], [-1, 1], name="y2") / height
-      # Won't be back-propagated to rois anyway, but to save time
+
+      """
+      Won't be back-propagated to rois anyway, but to save time
+      意思是在训练fast r-cnn时，rpn不再更新参数？
+      """
       bboxes = tf.stop_gradient(tf.concat([y1, x1, y2, x2], axis=1))
+
+      """
+      依据标准化后的坐标进行裁剪，并且resize到14*14
+      """
       pre_pool_size = cfg.POOLING_SIZE * 2
       crops = tf.image.crop_and_resize(bottom, bboxes, tf.to_int32(batch_ids), [pre_pool_size, pre_pool_size], name="crops")
 
+    # 增加一层max pool
     return slim.max_pool2d(crops, [2, 2], padding='SAME')
 
   def _dropout_layer(self, bottom, name, ratio=0.5):
@@ -285,22 +298,36 @@ class Network(object):
       initializer = tf.random_normal_initializer(mean=0.0, stddev=0.01)
       initializer_bbox = tf.random_normal_initializer(mean=0.0, stddev=0.001)
 
+    # 使用特定的卷积网络对image进行特征提取，生成feature maps。
     net_conv = self._image_to_head(is_training)
     with tf.variable_scope(self._scope, self._scope):
-      # build the anchors for the image
+      """
+      build the anchors for the image
+      根据feature map和strides为image生成anchors
+      """
       self._anchor_component()
-      # region proposal network
+
+      """
+      region proposal network
+      构造rpn(region proposal network)网络，rois是rpn网络输出的proposal boxes。
+      """
       rois = self._region_proposal(net_conv, is_training, initializer)
       # region of interest pooling
       if cfg.POOLING_MODE == 'crop':
+        # 依据proposal boxes的坐标对net_conv的feature maps进行裁剪和resize成14*14
         pool5 = self._crop_pool_layer(net_conv, rois, "pool5")
       else:
         raise NotImplementedError
 
+    # 在pool5后增加特定的卷积和pool层，生成full-connected7。
     fc7 = self._head_to_tail(pool5, is_training)
     with tf.variable_scope(self._scope, self._scope):
-      # region classification
-      cls_prob, bbox_pred = self._region_classification(fc7, is_training, 
+
+      """
+      region classification
+      根据fc7层，生成softmax分类器和bbox回归器
+      """
+      cls_prob, bbox_pred = self._region_classification(fc7, is_training,
                                                         initializer, initializer_bbox)
 
     self._score_summaries.update(self._predictions)
@@ -501,6 +528,17 @@ class Network(object):
     return rois
 
   def _region_classification(self, fc7, is_training, initializer, initializer_bbox):
+    """根据fc7层，生成softmax分类器和bbox回归器
+
+    Args:
+      fc7: fc7层
+      is_training: 是否是training
+      initializer: 权重初始化器
+      initializer_bbox: bounding box初始化器
+
+    Returns:
+      softmax分类器和bbox回归器
+    """
     cls_score = slim.fully_connected(fc7, self._num_classes, 
                                        weights_initializer=initializer,
                                        trainable=is_training,
@@ -530,7 +568,7 @@ class Network(object):
     self._image = tf.placeholder(tf.float32, shape=[1, None, None, 3])
     self._im_info = tf.placeholder(tf.float32, shape=[3])
 
-    # ground truth 最后一列代表类别
+    # ground truth 最后一列代表类别。
     self._gt_boxes = tf.placeholder(tf.float32, shape=[None, 5])
     self._tag = tag
 
@@ -562,7 +600,13 @@ class Network(object):
                     slim.conv2d_transpose, slim.separable_conv2d, slim.fully_connected], 
                     weights_regularizer=weights_regularizer,
                     biases_regularizer=biases_regularizer, 
-                    biases_initializer=tf.constant_initializer(0.0)): 
+                    biases_initializer=tf.constant_initializer(0.0)):
+      """
+      构建完整的faster r-cnn网络模型。
+      rois为rpn输出的proposal boxes。
+      cls_prob为分类器输出，保存proposal boxes对应的分类标签。
+      bbox_pred为bounding boxes回归器输出，保存proposal boxes与预测boxes之间的偏移量。
+      """
       rois, cls_prob, bbox_pred = self._build_network(training)
 
     layers_to_output = {'rois': rois}
