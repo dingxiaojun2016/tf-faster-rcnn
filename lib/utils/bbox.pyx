@@ -16,14 +16,14 @@ ctypedef np.float_t DTYPE_t
 def bbox_overlaps(
         np.ndarray[DTYPE_t, ndim=2] boxes,
         np.ndarray[DTYPE_t, ndim=2] query_boxes):
-    """
-    Parameters
-    ----------
-    boxes: (N, 4) ndarray of float
-    query_boxes: (K, 4) ndarray of float
-    Returns
-    -------
-    overlaps: (N, K) ndarray of overlap between boxes and query_boxes
+    """计算两个boxes之间的IoU
+
+    Args:
+        boxes: (N, 4) ndarray of float
+        query_boxes: (K, 4) ndarray of float
+
+    Returns:
+        overlaps: (N, K) ndarray of overlap between boxes and query_boxes
     """
     cdef unsigned int N = boxes.shape[0] # anchors boxes个数
     cdef unsigned int K = query_boxes.shape[0] # ground_truth boxes个数

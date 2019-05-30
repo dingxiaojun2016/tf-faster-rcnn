@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------
 # Faster R-CNN
 # Copyright (c) 2015 Microsoft
@@ -35,12 +36,17 @@ def proposal_target_layer(rpn_rois, rpn_scores, gt_boxes, _num_classes):
     # not sure if it a wise appending, but anyway i am not using it
     all_scores = np.vstack((all_scores, zeros))
 
+  """
+  一次训练一个图片，一个图片选择rois_per_image数量的proposal boxes，其中包含fg_rois_per_image数量的正样本。
+  """
   num_images = 1
   rois_per_image = cfg.TRAIN.BATCH_SIZE / num_images
   fg_rois_per_image = np.round(cfg.TRAIN.FG_FRACTION * rois_per_image)
 
-  # Sample rois with classification labels and bounding box regression
-  # targets
+  """
+  Sample rois with classification labels and bounding box regression targets
+  随机选取特定数量的proposal boxes，并计算对应的r-cnn bbox regression的学习目标，即proposal boxes与ground truth boxes的偏移量。
+  """
   labels, rois, roi_scores, bbox_targets, bbox_inside_weights = _sample_rois(
     all_rois, all_scores, gt_boxes, fg_rois_per_image,
     rois_per_image, _num_classes)
@@ -68,6 +74,12 @@ def _get_bbox_regression_labels(bbox_target_data, num_classes):
   """
 
   clss = bbox_target_data[:, 0]
+
+  """
+  bbox_targets的shape为N × 4k，N代表proposal boxes的个数，4k则是指对每一个类别都有四个值对应偏移量。
+  比如如果一个proposal box的类别是1，则bbox_targets对应该proposal box的行第4元素～第7个元素代表偏移量，其他值均为0。特殊的，对于背景，
+  对应的偏移量为0。
+  """
   bbox_targets = np.zeros((clss.size, 4 * num_classes), dtype=np.float32)
   bbox_inside_weights = np.zeros(bbox_targets.shape, dtype=np.float32)
   inds = np.where(clss > 0)[0]
@@ -87,11 +99,14 @@ def _compute_targets(ex_rois, gt_rois, labels):
   assert ex_rois.shape[1] == 4
   assert gt_rois.shape[1] == 4
 
+  # 计算proposal boxes与ground truth boxes之间的偏移量
   targets = bbox_transform(ex_rois, gt_rois)
   if cfg.TRAIN.BBOX_NORMALIZE_TARGETS_PRECOMPUTED:
     # Optionally normalize targets by a precomputed mean and stdev
     targets = ((targets - np.array(cfg.TRAIN.BBOX_NORMALIZE_MEANS))
                / np.array(cfg.TRAIN.BBOX_NORMALIZE_STDS))
+
+  # 将targets和labels组成一个tensor，targets放在labels后边
   return np.hstack(
     (labels[:, np.newaxis], targets)).astype(np.float32, copy=False)
 
@@ -100,22 +115,38 @@ def _sample_rois(all_rois, all_scores, gt_boxes, fg_rois_per_image, rois_per_ima
   """Generate a random sample of RoIs comprising foreground and background
   examples.
   """
-  # overlaps: (rois x gt_boxes)
+
+  """
+  overlaps: (rois x gt_boxes)
+  计算proposal boxes与ground truth boxes的IoU
+  """
   overlaps = bbox_overlaps(
     np.ascontiguousarray(all_rois[:, 1:5], dtype=np.float),
     np.ascontiguousarray(gt_boxes[:, :4], dtype=np.float))
   gt_assignment = overlaps.argmax(axis=1)
   max_overlaps = overlaps.max(axis=1)
+
+  # labels保存ground truth boxes的类型标签
   labels = gt_boxes[gt_assignment, 4]
 
-  # Select foreground RoIs as those with >= FG_THRESH overlap
+  """
+  Select foreground RoIs as those with >= FG_THRESH overlap
+  根据IoU和前景阈值，计算所有前景的proposal boxes，也就是包含物体的proposal boxes。
+  """
   fg_inds = np.where(max_overlaps >= cfg.TRAIN.FG_THRESH)[0]
-  # Guard against the case when an image has fewer than fg_rois_per_image
-  # Select background RoIs as those within [BG_THRESH_LO, BG_THRESH_HI)
+
+  """
+  Guard against the case when an image has fewer than fg_rois_per_image
+  Select background RoIs as those within [BG_THRESH_LO, BG_THRESH_HI)
+  根据IoU和背景阈值，计算所有背景的proposal boxes。
+  """
   bg_inds = np.where((max_overlaps < cfg.TRAIN.BG_THRESH_HI) &
                      (max_overlaps >= cfg.TRAIN.BG_THRESH_LO))[0]
 
-  # Small modification to the original version where we ensure a fixed number of regions are sampled
+  """
+  Small modification to the original version where we ensure a fixed number of regions are sampled
+  选取对应数据量的前景和背景proposal boxes。
+  """
   if fg_inds.size > 0 and bg_inds.size > 0:
     fg_rois_per_image = min(fg_rois_per_image, fg_inds.size)
     fg_inds = npr.choice(fg_inds, size=int(fg_rois_per_image), replace=False)
@@ -134,18 +165,40 @@ def _sample_rois(all_rois, all_scores, gt_boxes, fg_rois_per_image, rois_per_ima
     import pdb
     pdb.set_trace()
 
-  # The indices that we're selecting (both fg and bg)
+  """
+  The indices that we're selecting (both fg and bg)
+  连接一下前景和背景proposal boxes的indexes
+  """
   keep_inds = np.append(fg_inds, bg_inds)
+
   # Select sampled values from various arrays:
   labels = labels[keep_inds]
-  # Clamp labels for the background RoIs to 0
+
+  """
+  Clamp labels for the background RoIs to 0
+  将背景proposal boxes的label设置为0
+  """
   labels[int(fg_rois_per_image):] = 0
+
+  """
+  选取一下留下来的rois和roi_scores。
+  """
   rois = all_rois[keep_inds]
   roi_scores = all_scores[keep_inds]
 
+  """
+  计算一下留下来的proposal boxes与对应ground truth boxes之间的偏移量。
+  bbox_target_data的shape为：
+  (len(keep_inds), 5)，其中第2维中第一个元素为label，后四个元素为偏移量。
+  """
   bbox_target_data = _compute_targets(
     rois[:, 1:5], gt_boxes[gt_assignment[keep_inds], :4], labels)
 
+  """
+  bbox_targets的shape为N × 4k，N代表proposal boxes的个数，4k则是指对每一个类别都有四个值对应偏移量。
+  比如如果一个proposal box的类别是1，则bbox_targets对应该proposal box的行第4元素～第7个元素代表偏移量，其他值均为0。特殊的，对于背景，
+  对应的偏移量为0。
+  """
   bbox_targets, bbox_inside_weights = \
     _get_bbox_regression_labels(bbox_target_data, num_classes)
 

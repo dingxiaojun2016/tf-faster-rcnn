@@ -165,6 +165,22 @@ class Network(object):
     return tf.nn.dropout(bottom, ratio, name=name)
 
   def _anchor_target_layer(self, rpn_cls_score, name):
+    """生成anchors boxes的labels以及rpn bounding-box regression的学习目标。
+
+    label: 1 is positive, 0 is negative, -1 is dont care
+    labels用来保存anchors的标签，1代表是正标签，即该anchor是正样本，即存在ground truth 和该anchor的IoU满足rpn正样本的要求；0代表负样
+    本；-1代表不关心该样本。正样本指当做前景物体的boxes，负样本指代表背景的boxes。
+
+    rpn的bounding box regression的回归是需要将“predict boxes与anchors的偏移量rpn_bbox_pred”和“anchors boxes和ground truth
+    boxes之间的偏移量rpn_bbox_targets”进行接近
+
+    Args:
+      rpn_cls_score: 只用来传递feature map的shape
+      name: scope name
+
+    Returns:
+      anchors boxes的labels
+    """
     with tf.variable_scope(name) as scope:
       rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights = tf.py_func(
         anchor_target_layer,
@@ -172,7 +188,10 @@ class Network(object):
         [tf.float32, tf.float32, tf.float32, tf.float32],
         name="anchor_target")
 
+      # rpn_bales用来保存anchors的labels，labels代表anchor是正样本还是负样本。
       rpn_labels.set_shape([1, 1, None, None])
+
+      # rpn_bbox_targets用来保存anchors boxes和ground truth boxes的偏移量，他是rpn的bbox-regression的学习目标。
       rpn_bbox_targets.set_shape([1, None, None, self._num_anchors * 4])
       rpn_bbox_inside_weights.set_shape([1, None, None, self._num_anchors * 4])
       rpn_bbox_outside_weights.set_shape([1, None, None, self._num_anchors * 4])
@@ -188,6 +207,19 @@ class Network(object):
     return rpn_labels
 
   def _proposal_target_layer(self, rois, roi_scores, name):
+    """按规则选取一些proposal boxes，并生成r-cnn bounding boxes regression的学习目标。
+
+    r-cnn bounding boxes regression的学习目标是需要将”proposal boxes与predict boxes的偏移量bbox_pred“与”proposal boxes与ground
+    truth boxes的偏移量“进行接近。
+
+    Args:
+      rois: fast r-cnn的proposal boxes。
+      roi_scores: ros_scores用来保存proposal boxes的“是物体”的概率。
+      name: scope name
+
+    Returns:
+      按规则选取后的rois和roi_scores。
+    """
     with tf.variable_scope(name) as scope:
       rois, roi_scores, labels, bbox_targets, bbox_inside_weights, bbox_outside_weights = tf.py_func(
         proposal_target_layer,
@@ -412,7 +444,7 @@ class Network(object):
     rpn_cls_prob = self._reshape_layer(rpn_cls_prob_reshape, self._num_anchors * 2, "rpn_cls_prob")
 
     """
-    增加一个全连接层，输出是anchors个数的4倍，代表一个proposal boxes相对于anchor boxes的中心坐标和宽高的偏移量，用于回归学习，具体偏移
+    增加一个全连接层，输出是anchors个数的4倍，代表一个predict boxes相对于anchor boxes的中心坐标和宽高的偏移量，用于回归学习，具体偏移
     量的解释见bbox_transform中的bbox_transform_inv_tf函数。
     这里假设rpn_bbox_pred的值如下：
     array([[[[ 0,  0,  0,  0,  0,  0,  0,  0],
@@ -420,18 +452,36 @@ class Network(object):
             [[ 0,  0,  0,  0,  0,  0,  0,  0],
              [ 0,  0,  0,  0,  0,  0,  0,  0]]]])
     shape为(1, 2, 2, 8)，即feature map总共有4个像素点，每个像素点有两个anchors，每行代表某个像素点两个anchors经过rpn回归之后得到的
-    proposal boxes相对于anchor boxes的中心坐标和宽高的偏移量。这里为了简单，假设偏移量都为0，即代表proposal boxes和anchors boxes完
-    全一致，第一行的前4个0代表feature map第一个像素点的第一个anchor boxes，经过rpn回归后得到proposal boxes与anchor boxes中心坐标偏
+    predict boxes相对于anchor boxes的中心坐标和宽高的偏移量。这里为了简单，假设偏移量都为0，即代表predict boxes和anchors boxes完
+    全一致，第一行的前4个0代表feature map第一个像素点的第一个anchor boxes，经过rpn回归后得到predict boxes与anchor boxes中心坐标偏
     移量和宽高偏移量。以此类推。
     """
     rpn_bbox_pred = slim.conv2d(rpn, self._num_anchors * 4, [1, 1], trainable=is_training,
                                 weights_initializer=initializer,
                                 padding='VALID', activation_fn=None, scope='rpn_bbox_pred')
     if is_training:
+      """
+      rois用来保存predict boxes的边框描述。
+      shape为(anchors个数, 5)
+      ros_scores用来保存predict boxes的“是物体”的概率。
+      shape为(anchors个数, 1)
+      """
       rois, roi_scores = self._proposal_layer(rpn_cls_prob, rpn_bbox_pred, "rois")
+
+      """
+      rpn_labels用来保存anchors的labels，labels代表anchor是正样本还是负样本。
+      shape为(1, 1, 每一个像素点anchors个数*feature map高度, feature map的宽度)
+      另外_anchor_target_layer还计算了anchors boxes和ground truth boxes之间的偏移量rpn_bbox_targets，我们应该知道rpn的bounding
+      box regression的回归是需要将“predict boxes与anchors的偏移量rpn_bbox_pred”和“anchors boxes和ground truth boxes之间的偏移
+      量rpn_bbox_targets”进行接近。
+      """
       rpn_labels = self._anchor_target_layer(rpn_cls_score, "anchor")
       # Try to have a deterministic order for the computing graph, for reproducibility
       with tf.control_dependencies([rpn_labels]):
+        """
+        上述rpn的predict boxes作为fast r-cnn的proposal boxes。
+        按规则选取一些proposal boxes，并生成r-cnn bounding boxes regression的学习目标。
+        """
         rois, _ = self._proposal_target_layer(rois, roi_scores, "rpn_rois")
     else:
       if cfg.TEST.MODE == 'nms':
@@ -479,6 +529,8 @@ class Network(object):
                           anchor_scales=(8, 16, 32), anchor_ratios=(0.5, 1, 2)):
     self._image = tf.placeholder(tf.float32, shape=[1, None, None, 3])
     self._im_info = tf.placeholder(tf.float32, shape=[3])
+
+    # ground truth 最后一列代表类别
     self._gt_boxes = tf.placeholder(tf.float32, shape=[None, 5])
     self._tag = tag
 

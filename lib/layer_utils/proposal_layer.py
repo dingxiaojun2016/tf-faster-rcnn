@@ -88,7 +88,7 @@ def proposal_layer_tf(rpn_cls_prob, rpn_bbox_pred, im_info, cfg_key, _feat_strid
          [0., 0., 0., 0.],
          [0., 0., 0., 0.],
          [0., 0., 0., 0.]])
-  shape为(8, 4)，每一行代表一个anchor boxes经过rpn回归之后得到proposal boxes相对于anchor boxes的中心坐标和宽高的偏移量，具体解释见
+  shape为(8, 4)，每一行代表一个anchor boxes经过rpn回归之后得到predict boxes相对于anchor boxes的中心坐标和宽高的偏移量，具体解释见
   bbox_transform中的bbox_transform_inv_tf函数。
   """
   rpn_bbox_pred = tf.reshape(rpn_bbox_pred, shape=(-1, 4))
@@ -104,7 +104,7 @@ def proposal_layer_tf(rpn_cls_prob, rpn_bbox_pred, im_info, cfg_key, _feat_strid
          [24, 24, 26, 26],
          [28, 28, 30, 30]])
   shape同样为(8, 4)，每一行代表一个原始anchor的坐标描述。
-  通过计算，proposal boxes的坐标如下：
+  通过计算，predict boxes的坐标如下：
   array([[ 0.,  0.,  3.,  3.],
          [ 4.,  4.,  7.,  7.],
          [ 8.,  8., 11., 11.],
@@ -113,14 +113,14 @@ def proposal_layer_tf(rpn_cls_prob, rpn_bbox_pred, im_info, cfg_key, _feat_strid
          [20., 20., 23., 23.],
          [24., 24., 27., 27.],
          [28., 28., 31., 31.]])
-  shape为(8, 4)，本来设置偏移量为0的，为何算出来的proposal boxes和anchor boxes有点不一样呢？ 通过分析发现bbox_transform_inv_tf中的
+  shape为(8, 4)，本来设置偏移量为0的，为何算出来的predict boxes和anchor boxes有点不一样呢？ 通过分析发现bbox_transform_inv_tf中的
   计算中心坐标过程有点问题。但是可能影响比较小吧。
   """
   proposals = bbox_transform_inv_tf(anchors, rpn_bbox_pred)
 
   """
   通过分析minibatch.py可得im_info由三个数组成，分别为高，宽和缩放比例。
-  上边得到了proposal boxes的坐标描述，但是为了限制在图片内，所以需要把坐标跟宽高进行比较。
+  上边得到了predict boxes的坐标描述，但是为了限制在图片内，所以需要把坐标跟宽高进行比较。
   使得x坐标满足：
   0<= x <= w
   使得y坐标满足：
@@ -130,12 +130,12 @@ def proposal_layer_tf(rpn_cls_prob, rpn_bbox_pred, im_info, cfg_key, _feat_strid
 
   """
   Non-maximal suppression
-  通过非极大抑制算法减少一些重叠度比较大的proposal boxes，关于非极大抑制算法见lib/nms/的readme。
+  通过非极大抑制算法减少一些重叠度比较大的predict boxes，关于非极大抑制算法见lib/nms/的readme。
   """
   indices = tf.image.non_max_suppression(proposals, scores, max_output_size=post_nms_topN, iou_threshold=nms_thresh)
 
   """
-  根据非极大抑制算法算出来的需要保留的proposal boxes indices缩减一下proposals和scores。
+  根据非极大抑制算法算出来的需要保留的predict boxes indices缩减一下proposals和scores。
   """
   boxes = tf.gather(proposals, indices)
   boxes = tf.to_float(boxes)
@@ -144,7 +144,7 @@ def proposal_layer_tf(rpn_cls_prob, rpn_bbox_pred, im_info, cfg_key, _feat_strid
 
   """
   Only support single image as input
-  在proposal boxes前加一列0？接着下面分析看前面一列0的用途。
+  在predict boxes前加一列0？接着下面分析看前面一列0的用途。
   """
   batch_inds = tf.zeros((tf.shape(indices)[0], 1), dtype=tf.float32)
   blob = tf.concat([batch_inds, boxes], 1)

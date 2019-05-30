@@ -199,7 +199,17 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride, all_anch
   bbox_inside_weights = _unmap(bbox_inside_weights, total_anchors, inds_inside, fill=0)
   bbox_outside_weights = _unmap(bbox_outside_weights, total_anchors, inds_inside, fill=0)
 
-  # labels
+  """
+  假设labels为：
+  array([0, 1, 0, 1, 0, 1, 0, 1])
+  假设feature map有两行两列，每个像素点有两个anchors。
+  经过转置和reshape，rpn_labels为：
+  array([[[[0, 0],    ---feature map第一行两个像素点对应的第一个anchor的label
+           [0, 0],    ---feature map第二行两个像素点对应的第一个anchor的label
+           [1, 1],    ---feature map第一行两个像素点对应的第二个anchor的label
+           [1, 1]]]]) ---feature map第二行两个像素点对应的第二个anchor的label
+  shape为(1, 4, 2, 2)
+  """
   labels = labels.reshape((1, height, width, A)).transpose(0, 3, 1, 2)
   labels = labels.reshape((1, 1, A * height, width))
   rpn_labels = labels

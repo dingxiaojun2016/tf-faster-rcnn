@@ -6,7 +6,7 @@
 # Written by Ross Girshick
 # --------------------------------------------------------
 """
-bounding-boxes模块，包含anchors与ground truth的偏移量计算；以及由anchors和偏移量计算预测boxes；还有限制boxes在图片尺寸内的计算。
+bounding-boxes模块，包含boxes与ground truth的偏移量计算；以及由boxes和偏移量计算predict boxes；还有限制boxes在图片尺寸内的计算。
 """
 
 from __future__ import absolute_import
@@ -17,16 +17,16 @@ import numpy as np
 import tensorflow as tf
 
 def bbox_transform(ex_rois, gt_rois):
-  """根据anchors和ground truth boxes来计算偏移量，偏移量解释见bbox_transform_inv_tf函数。
+  """根据ex_rois boxes和ground truth boxes来计算偏移量，偏移量解释见bbox_transform_inv_tf函数。
 
   Args:
-    ex_rois: anchors boxes
+    ex_rois: ex_rois boxes
     gt_rois: ground truth boxes
 
   Returns:
     偏移量
   """
-  # 获取一下anchors的宽高、中心点坐标
+  # 获取一下ex_rois的宽高、中心点坐标
   ex_widths = ex_rois[:, 2] - ex_rois[:, 0] + 1.0
   ex_heights = ex_rois[:, 3] - ex_rois[:, 1] + 1.0
   ex_ctr_x = ex_rois[:, 0] + 0.5 * ex_widths
@@ -38,7 +38,7 @@ def bbox_transform(ex_rois, gt_rois):
   gt_ctr_x = gt_rois[:, 0] + 0.5 * gt_widths
   gt_ctr_y = gt_rois[:, 1] + 0.5 * gt_heights
 
-  # 计算一下anchors和ground truth boxes的偏移量，偏移量的具体含义见bbox_transform_inv_tf函数
+  # 计算一下ex_rois和ground truth boxes的偏移量，偏移量的具体含义见bbox_transform_inv_tf函数
   targets_dx = (gt_ctr_x - ex_ctr_x) / ex_widths
   targets_dy = (gt_ctr_y - ex_ctr_y) / ex_heights
   targets_dw = np.log(gt_widths / ex_widths)
@@ -50,10 +50,10 @@ def bbox_transform(ex_rois, gt_rois):
 
 
 def bbox_transform_inv(boxes, deltas):
-  """根据anchors和偏移量deltas来计算预测boxes，同bbox_transform正好是个反过程。
+  """根据boxes和偏移量deltas来计算predict boxes，同bbox_transform正好是个反过程。
 
   Args:
-    boxes: anchors
+    boxes: boxes
     deltas: 偏移量
 
   Returns:
@@ -115,10 +115,10 @@ def clip_boxes(boxes, im_shape):
 
 def bbox_transform_inv_tf(boxes, deltas):
   """ bbox_transform_inv的tensorflow版本。
-  根据anchors的原始坐标和经过rpn之后的得到的偏移量deltas，来计算proposal boxes。
-  anchors boxes和deltas和proposal boxes之间的关系如下：
-  假设anchors boxes中心的坐标为(xa, ya)，宽高为wa，ha。
-  假设proposal boxes中心的坐标为(xp, yp)，宽高为wp，hp。
+  根据boxes的原始坐标和偏移量deltas，来计算predict boxes。
+  boxes和deltas和predict boxes之间的关系如下：
+  假设boxes中心的坐标为(xa, ya)，宽高为wa，ha。
+  假设predict boxes中心的坐标为(xp, yp)，宽高为wp，hp。
   则公式如下：
   dx = (xp - xa) / wa
   dy = (yp - ya) / ha
@@ -126,11 +126,11 @@ def bbox_transform_inv_tf(boxes, deltas):
   dh = log(hp / ha)
 
   Args:
-    boxes: anchors boxes
-    deltas: 经过rpn之后的得到的偏移量deltas
+    boxes: boxes
+    deltas: 偏移量deltas
 
   Returns:
-    返回proposal boxes的左上坐标，和右下坐标。
+    返回predict boxes的左上坐标，和右下坐标。
   """
   boxes = tf.cast(boxes, deltas.dtype)
 
@@ -155,13 +155,13 @@ def bbox_transform_inv_tf(boxes, deltas):
   dw = deltas[:, 2]
   dh = deltas[:, 3]
 
-  # 根据转换公式，通过偏移量和anchors中心坐标和宽高计算proposal的中心坐标和宽高
+  # 根据转换公式，通过偏移量和boxes中心坐标和宽高计算predict boxes的中心坐标和宽高
   pred_ctr_x = tf.add(tf.multiply(dx, widths), ctr_x)
   pred_ctr_y = tf.add(tf.multiply(dy, heights), ctr_y)
   pred_w = tf.multiply(tf.exp(dw), widths)
   pred_h = tf.multiply(tf.exp(dh), heights)
 
-  # 根据proposal boxes的中心坐标和宽高来计算proposal boxes的左上和右下坐标
+  # 根据predict boxes的中心坐标和宽高来计算predict boxes的左上和右下坐标
   pred_boxes0 = tf.subtract(pred_ctr_x, pred_w * 0.5)
   pred_boxes1 = tf.subtract(pred_ctr_y, pred_h * 0.5)
   pred_boxes2 = tf.add(pred_ctr_x, pred_w * 0.5)
