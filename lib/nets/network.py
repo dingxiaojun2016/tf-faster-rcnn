@@ -49,10 +49,13 @@ class Network(object):
     # use a customized visualization function to visualize the boxes
     if self._gt_image is None:
       self._add_gt_image()
+
+    # 为当前训练的图片绘制ground truth boxes
     image = tf.py_func(draw_bounding_boxes, 
                       [self._gt_image, self._gt_boxes, self._im_info],
                       tf.float32, name="gt_boxes")
-    
+
+    # 将绘制好gt boxes的图片增加到tensorboard的summary中
     return tf.summary.image('GROUND_TRUTH', image)
 
   def _add_act_summary(self, tensor):
@@ -335,10 +338,29 @@ class Network(object):
     return rois, cls_prob, bbox_pred
 
   def _smooth_l1_loss(self, bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights, sigma=1.0, dim=[1]):
+    """计算bbox_pred和bbox_targets的smooth_l1_loss。
+    bbox_pred和bbox_targets的shape为(1, feature map的高, feature map的宽, feature map每个像素点对应的anchors个数)
+
+    Args:
+      bbox_pred: anchors boxes-predict boxes的偏移量
+      bbox_targets: anchors boxes-ground truth boxes的偏移量
+      bbox_inside_weights: smooth_l1_loss的参数
+      bbox_outside_weights: smooth_l1_loss的参数
+      sigma: smooth_l1_loss的参数
+      dim: 求平均值的维度
+
+    Returns:
+      smooth_l1_loss
+    """
     sigma_2 = sigma ** 2
+
+    # 两者差值是smooth_l1_loss的输入
     box_diff = bbox_pred - bbox_targets
+
+    # bbox_inside_weights对于fg来说为1，其他为0
     in_box_diff = bbox_inside_weights * box_diff
     abs_in_box_diff = tf.abs(in_box_diff)
+    # 这里stop_gradient是什么作用？
     smoothL1_sign = tf.stop_gradient(tf.to_float(tf.less(abs_in_box_diff, 1. / sigma_2)))
     in_loss_box = tf.pow(in_box_diff, 2) * (sigma_2 / 2.) * smoothL1_sign \
                   + (abs_in_box_diff - (0.5 / sigma_2)) * (1. - smoothL1_sign)
@@ -351,16 +373,26 @@ class Network(object):
 
   def _add_losses(self, sigma_rpn=3.0):
     with tf.variable_scope('LOSS_' + self._tag) as scope:
-      # RPN, class loss
+      """
+      RPN, class loss
+      利用rpn的分类logits和rpn labels来构成rpn分类损失函数
+      """
+      # 将rpn的分类logits和分类标签rpn_label reshape成同样的一维长度，代表anchors的个数。
       rpn_cls_score = tf.reshape(self._predictions['rpn_cls_score_reshape'], [-1, 2])
       rpn_label = tf.reshape(self._anchor_targets['rpn_labels'], [-1])
       rpn_select = tf.where(tf.not_equal(rpn_label, -1))
+      # 选取正负样本
       rpn_cls_score = tf.reshape(tf.gather(rpn_cls_score, rpn_select), [-1, 2])
       rpn_label = tf.reshape(tf.gather(rpn_label, rpn_select), [-1])
+      # 由rpn的分类logits层rpn_cls_score和分类标签rpn_label构成交叉熵losses作为分类损失。
       rpn_cross_entropy = tf.reduce_mean(
         tf.nn.sparse_softmax_cross_entropy_with_logits(logits=rpn_cls_score, labels=rpn_label))
 
-      # RPN, bbox loss
+      """
+      RPN, bbox loss
+      利用“rpn的anchors boxes和predict boxes的偏移量rpn_bbox_pred”与“rpn的anchors boxes和ground truth boxes的偏移量
+      rpn_bbox_targets”，构成rpn的bounding boxes回归损失。
+      """
       rpn_bbox_pred = self._predictions['rpn_bbox_pred']
       rpn_bbox_targets = self._anchor_targets['rpn_bbox_targets']
       rpn_bbox_inside_weights = self._anchor_targets['rpn_bbox_inside_weights']
@@ -368,12 +400,19 @@ class Network(object):
       rpn_loss_box = self._smooth_l1_loss(rpn_bbox_pred, rpn_bbox_targets, rpn_bbox_inside_weights,
                                           rpn_bbox_outside_weights, sigma=sigma_rpn, dim=[1, 2, 3])
 
-      # RCNN, class loss
+      """
+      RCNN, class loss
+      利用r-cnn的分类器logits和proposal boxes的labels来构成r-cnn的分类损失函数
+      """
       cls_score = self._predictions["cls_score"]
       label = tf.reshape(self._proposal_targets["labels"], [-1])
       cross_entropy = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=cls_score, labels=label))
 
-      # RCNN, bbox loss
+      """
+      RCNN, bbox loss
+      利用”r-cnn的proposal boxes和predict boxes的偏移量bbox_pred“和”r-cnn的proposal boxes与ground truth boxes的偏移量
+      bbox_targets“，构成r-cnn的bounding boxes回归损失。
+      """
       bbox_pred = self._predictions['bbox_pred']
       bbox_targets = self._proposal_targets['bbox_targets']
       bbox_inside_weights = self._proposal_targets['bbox_inside_weights']
@@ -566,6 +605,7 @@ class Network(object):
   def create_architecture(self, mode, num_classes, tag=None,
                           anchor_scales=(8, 16, 32), anchor_ratios=(0.5, 1, 2)):
     self._image = tf.placeholder(tf.float32, shape=[1, None, None, 3])
+    # im_info保存当前训练图片的高宽和被缩放比例
     self._im_info = tf.placeholder(tf.float32, shape=[3])
 
     # ground truth 最后一列代表类别。
@@ -604,8 +644,9 @@ class Network(object):
       """
       构建完整的faster r-cnn网络模型。
       rois为rpn输出的proposal boxes。
-      cls_prob为分类器输出，保存proposal boxes对应的分类标签。
-      bbox_pred为bounding boxes回归器输出，保存proposal boxes与预测boxes之间的偏移量。
+      cls_prob为r-cnn分类器输出，保存proposal boxes对应的分类标签。
+      bbox_pred为r-cnn bounding boxes回归器输出，保存proposal boxes与预测boxes之间的偏移量。
+      rpn用来给r-cnn提供proposal boxes，r-cnn则对这些proposal boxes进行分类和边框回归。
       """
       rois, cls_prob, bbox_pred = self._build_network(training)
 
@@ -620,18 +661,28 @@ class Network(object):
       self._predictions["bbox_pred"] *= stds
       self._predictions["bbox_pred"] += means
     else:
+      # 计算rpn和r-cnn的losses
       self._add_losses()
       layers_to_output.update(self._losses)
 
       val_summaries = []
       with tf.device("/cpu:0"):
+        # 增加图片summaries
         val_summaries.append(self._add_gt_image_summary())
+
+        # 增加losses scalar summaries
         for key, var in self._event_summaries.items():
           val_summaries.append(tf.summary.scalar(key, var))
+
+        # 增加scores histogram summaries
         for key, var in self._score_summaries.items():
           self._add_score_summary(key, var)
+
+        # 增加act histogram summaries和act零占比的scalars
         for var in self._act_summaries:
           self._add_act_summary(var)
+
+        # 增加所有trainable的变量的histogram的summaries
         for var in self._train_summaries:
           self._add_train_summary(var)
 

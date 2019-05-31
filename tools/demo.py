@@ -146,7 +146,8 @@ if __name__ == '__main__':
     print('Loaded network {:s}'.format(tfmodel))
 
     im_names = ['000456.jpg', '000542.jpg', '001150.jpg',
-                '001763.jpg', '004545.jpg']
+                '001763.jpg', '004545.jpg', 'dog_cat00.jpg',
+                'dog_cat02.jpg', 'dog_cat03.jpg']
     for im_name in im_names:
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         print('Demo for data/demo/{}'.format(im_name))

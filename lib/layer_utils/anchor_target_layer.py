@@ -55,7 +55,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride, all_anch
   考察训练集中的每张图像（含有人工标定的ground true box）的所有anchors。
   a. 对每个标定的ground true box区域，与其重叠比例最大的anchor记为 正样本 (保证每个ground true 至少对应一个正样本anchor)
   b. 对a)剩余的anchor，如果其与某个标定区域重叠比例大于0.7，记为正样本（每个ground true box可能会对应多个正样本anchor。但每个正样本
-  anchor 只可能对应一个grand true box）；如果其与任意一个标定的重叠比例都小于0.3，记为负样本。
+  anchor 只可能对应一个ground true box）；如果其与任意一个标定的重叠比例都小于0.3，记为负样本。
   c. 对a),b)剩余的anchor，弃去不用。
   d. 跨越图像边界的anchor弃去不用
   """
@@ -160,7 +160,6 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride, all_anch
     disable_inds = npr.choice(
       bg_inds, size=(len(bg_inds) - num_bg), replace=False)
     labels[disable_inds] = -1
-
 
   bbox_targets = np.zeros((len(inds_inside), 4), dtype=np.float32)
   """
