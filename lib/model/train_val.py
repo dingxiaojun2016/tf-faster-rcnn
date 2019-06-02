@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------
 # Tensorflow Faster R-CNN
 # Licensed under The MIT License [see LICENSE for details]
@@ -81,18 +82,28 @@ class SolverWrapper(object):
 
   def from_snapshot(self, sess, sfile, nfile):
     print('Restoring model snapshots from {:s}'.format(sfile))
+    # 恢复之前训练的参数
     self.saver.restore(sess, sfile)
     print('Restored.')
     # Needs to restore the other hyper-parameters/states for training, (TODO xinlei) I have
     # tried my best to find the random states so that it can be recovered exactly
     # However the Tensorflow state is currently not available
+
+    # 恢复一些超参数
     with open(nfile, 'rb') as fid:
+      # numpy random模块的状态。
       st0 = pickle.load(fid)
+      # 当期训练图片的index
       cur = pickle.load(fid)
+      # 所有训练图片的顺序
       perm = pickle.load(fid)
+      # 当前测试图片的index
       cur_val = pickle.load(fid)
+      # 所有测试图片的顺序
       perm_val = pickle.load(fid)
+      # 当前训练迭代的次数
       last_snapshot_iter = pickle.load(fid)
+
 
       np.random.set_state(st0)
       self.data_layer._cur = cur
@@ -115,9 +126,16 @@ class SolverWrapper(object):
 
   def construct_graph(self, sess):
     with sess.graph.as_default():
-      # Set the random seed for tensorflow
+      """
+      Set the random seed for tensorflow
+      固定下来tensorflow graph-level random seed
+      """
       tf.set_random_seed(cfg.RNG_SEED)
-      # Build the main computation graph
+
+      """
+      Build the main computation graph
+      构建网络模型的graph
+      """
       layers = self.net.create_architecture('TRAIN', self.imdb.num_classes, tag='default',
                                             anchor_scales=cfg.ANCHOR_SCALES,
                                             anchor_ratios=cfg.ANCHOR_RATIOS)
@@ -137,6 +155,7 @@ class SolverWrapper(object):
             scale = 1.
             if cfg.TRAIN.DOUBLE_BIAS and '/biases:' in var.name:
               scale *= 2.
+            # 判断scale和1.0是否相近
             if not np.allclose(scale, 1.0):
               grad = tf.multiply(grad, scale)
             final_gvs.append((grad, var))
@@ -254,6 +273,7 @@ class SolverWrapper(object):
     if lsf == 0:
       rate, last_snapshot_iter, stepsizes, np_paths, ss_paths = self.initialize(sess)
     else:
+      # 恢复一下上次训练的结果，包括学习速率、迭代次数、参数和超参数等。
       rate, last_snapshot_iter, stepsizes, np_paths, ss_paths = self.restore(sess, 
                                                                             str(sfiles[-1]), 
                                                                             str(nfiles[-1]))
@@ -265,7 +285,10 @@ class SolverWrapper(object):
     stepsizes.reverse()
     next_stepsize = stepsizes.pop()
     while iter < max_iters + 1:
-      # Learning rate
+      """
+      Learning rate
+      特定步数更新learning rate
+      """
       if iter == next_stepsize + 1:
         # Add snapshot here before reducing the learning rate
         self.snapshot(sess, iter)
@@ -273,10 +296,14 @@ class SolverWrapper(object):
         sess.run(tf.assign(lr, rate))
         next_stepsize = stepsizes.pop()
 
+      # 开始计时
       timer.tic()
       # Get training data, one batch at a time
       blobs = self.data_layer.forward()
 
+      """
+      执行训练过程，每个cfg.TRAIN.SUMMARY_INTERVAL时间，记一次tensorboard summary。
+      """
       now = time.time()
       if iter == 1 or now - last_summary_time > cfg.TRAIN.SUMMARY_INTERVAL:
         # Compute the graph with summary
@@ -292,6 +319,8 @@ class SolverWrapper(object):
         # Compute the graph without summary
         rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, total_loss = \
           self.net.train_step(sess, blobs, train_op)
+
+      # 记录每次迭代的用时
       timer.toc()
 
       # Display training information
@@ -301,7 +330,10 @@ class SolverWrapper(object):
               (iter, max_iters, total_loss, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, lr.eval()))
         print('speed: {:.3f}s / iter'.format(timer.average_time))
 
-      # Snapshotting
+      """
+      Snapshotting
+      记录当前所有网络模型参数和训练超参数。
+      """
       if iter % cfg.TRAIN.SNAPSHOT_ITERS == 0:
         last_snapshot_iter = iter
         ss_path, np_path = self.snapshot(sess, iter)

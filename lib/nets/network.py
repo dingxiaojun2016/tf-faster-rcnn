@@ -604,6 +604,7 @@ class Network(object):
 
   def create_architecture(self, mode, num_classes, tag=None,
                           anchor_scales=(8, 16, 32), anchor_ratios=(0.5, 1, 2)):
+    # 一次train只训练一张图片
     self._image = tf.placeholder(tf.float32, shape=[1, None, None, 3])
     # im_info保存当前训练图片的高宽和被缩放比例
     self._im_info = tf.placeholder(tf.float32, shape=[3])
