@@ -41,6 +41,11 @@ def voc_ap(rec, prec, use_07_metric=False):
   """
   if use_07_metric:
     # 11 point metric
+    """
+    PASCAL  VOC  CHALLENGE的2010年之前计算方法。首先设定一组阈值，[0, 0.1, 0.2, …, 1]。然后对于recall大于每一个阈值（比如
+    recall>0.3），我们都会得到一个对应的最大precision。这样，我们就计算出了11个precision。AP即为这11个precision的平均值。这种
+    方法英文叫做11-point interpolated average precision。​
+    """
     ap = 0.
     for t in np.arange(0., 1.1, 0.1):
       if np.sum(rec >= t) == 0:
@@ -51,6 +56,11 @@ def voc_ap(rec, prec, use_07_metric=False):
   else:
     # correct AP calculation
     # first append sentinel values at the end
+    """
+    PASCAL VOC CHALLENGE自2010年后就换了另一种计算方法。新的计算方法假设这N个样本中有M个正例，那么我们会得到M个recall值（1/M,
+    2/M, ..., M/M）,对于每个recall值r，我们可以计算出对应（r' > r）的最大precision，然后对这M个precision值取平均即得到最后的
+    AP值。
+    """
     mrec = np.concatenate(([0.], rec, [1.]))
     mpre = np.concatenate(([0.], prec, [0.]))
 
@@ -100,6 +110,12 @@ def voc_eval(detpath,
   # assumes imagesetfile is a text file with each line an image name
   # cachedir caches the annotations in a pickle file
 
+  """
+  计算当前classname对应的class的AP值。
+  具体计算过程的解释见如下链接：
+  https://blog.csdn.net/qq_41994006/article/details/81051150
+  """
+
   # first load gt
   if not os.path.isdir(cachedir):
     os.mkdir(cachedir)
@@ -134,7 +150,7 @@ def voc_eval(detpath,
   # extract gt objects for this class
   class_recs = {}
 
-  # npos记录所有images中该类型的ground truth boxes的个数，可能抛去difficult的boxes。
+  # npos(n positives)记录所有images中该类型的ground truth boxes的个数，可能抛去difficult的boxes。
   npos = 0
   for imagename in imagenames:
     # 寻找当前image所有分类是classname的 ground truth box
@@ -145,6 +161,7 @@ def voc_eval(detpath,
     else:
       difficult = np.array([x['difficult'] for x in R]).astype(np.bool)
     det = [False] * len(R)
+    # 抛去difficult的boxes
     npos = npos + sum(~difficult)
     class_recs[imagename] = {'bbox': bbox,
                              'difficult': difficult,
@@ -157,6 +174,7 @@ def voc_eval(detpath,
   with open(detfile, 'r') as f:
     lines = f.readlines()
 
+  # [image_index, score, x1, y1, x2, y2]
   splitlines = [x.strip().split(' ') for x in lines]
   # boxes对应的image index
   image_ids = [x[0] for x in splitlines]
@@ -166,14 +184,14 @@ def voc_eval(detpath,
   BB = np.array([[float(z) for z in x[2:]] for x in splitlines])
 
   nd = len(image_ids)
-  # tp保存预测正确的boxes的index
+  # tp(true positive)保存预测正确的boxes的index
   tp = np.zeros(nd)
-  # fp保存预测错误的boxes的index
+  # fp(false positive)保存预测错误的boxes的index
   fp = np.zeros(nd)
 
   if BB.shape[0] > 0:
     # sort by confidence
-    # 按概率倒序排序
+    # 按概率倒序将BB和image_ids排序
     sorted_ind = np.argsort(-confidence)
     sorted_scores = np.sort(-confidence)
     BB = BB[sorted_ind, :]
@@ -222,11 +240,11 @@ def voc_eval(detpath,
   # compute precision recall
   fp = np.cumsum(fp)
   tp = np.cumsum(tp)
-  # 召回率
+  # 每个top-n的召回率
   rec = tp / float(npos)
   # avoid divide by zero in case the first detection matches a difficult
   # ground truth
-  # 精准率
+  # 每个top-n的精准率
   prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
   ap = voc_ap(rec, prec, use_07_metric)
 

@@ -170,7 +170,11 @@ def test_net(sess, net, imdb, weights_filename, max_per_image=100, thresh=0.):
 
     _t['misc'].tic()
 
-    # skip j = 0, because it's the background class
+    """
+    skip j = 0, because it's the background class
+    按将所有predict boxes按“预测类型”和“image文件”进行组合，比如all_boxes第一行第二列代表属于第一个类型的，在第二个image文件的
+    所有predict boxes。
+    """
     for j in range(1, imdb.num_classes):
       inds = np.where(scores[:, j] > thresh)[0]
       cls_scores = scores[inds, j]
