@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------
 # Fast/er R-CNN
 # Licensed under The MIT License [see LICENSE for details]
@@ -104,12 +105,14 @@ def voc_eval(detpath,
     os.mkdir(cachedir)
   cachefile = os.path.join(cachedir, '%s_annots.pkl' % imagesetfile)
   # read list of images
+  # 所有需要计算的iamge index
   with open(imagesetfile, 'r') as f:
     lines = f.readlines()
   imagenames = [x.strip() for x in lines]
 
   if not os.path.isfile(cachefile):
     # load annotations
+    # 加载所有image的annotations文件，读取所有的ground truth boxes。
     recs = {}
     for i, imagename in enumerate(imagenames):
       recs[imagename] = parse_rec(annopath.format(imagename))
@@ -130,8 +133,11 @@ def voc_eval(detpath,
 
   # extract gt objects for this class
   class_recs = {}
+
+  # npos记录所有images中该类型的ground truth boxes的个数，可能抛去difficult的boxes。
   npos = 0
   for imagename in imagenames:
+    # 寻找当前image所有分类是classname的 ground truth box
     R = [obj for obj in recs[imagename] if obj['name'] == classname]
     bbox = np.array([x['bbox'] for x in R])
     if use_diff:
@@ -145,21 +151,29 @@ def voc_eval(detpath,
                              'det': det}
 
   # read dets
+  # 比如VOCdevkit/results/VOC2007/Main/<comp_id>_det_test_aeroplane.txt
+  # 读取出来的数据是所有对应到该类的boxes的描述。
   detfile = detpath.format(classname)
   with open(detfile, 'r') as f:
     lines = f.readlines()
 
   splitlines = [x.strip().split(' ') for x in lines]
+  # boxes对应的image index
   image_ids = [x[0] for x in splitlines]
+  # boxes对应该类的概率
   confidence = np.array([float(x[1]) for x in splitlines])
+  # boxes的坐标描述
   BB = np.array([[float(z) for z in x[2:]] for x in splitlines])
 
   nd = len(image_ids)
+  # tp保存预测正确的boxes的index
   tp = np.zeros(nd)
+  # fp保存预测错误的boxes的index
   fp = np.zeros(nd)
 
   if BB.shape[0] > 0:
     # sort by confidence
+    # 按概率倒序排序
     sorted_ind = np.argsort(-confidence)
     sorted_scores = np.sort(-confidence)
     BB = BB[sorted_ind, :]
@@ -167,7 +181,9 @@ def voc_eval(detpath,
 
     # go down dets and mark TPs and FPs
     for d in range(nd):
+      # 找到d index的image的关于当前类的所有ground truth boxes
       R = class_recs[image_ids[d]]
+      # predict box坐标描述
       bb = BB[d, :].astype(float)
       ovmax = -np.inf
       BBGT = R['bbox'].astype(float)
@@ -189,6 +205,7 @@ def voc_eval(detpath,
                (BBGT[:, 3] - BBGT[:, 1] + 1.) - inters)
 
         overlaps = inters / uni
+        # 与当前predict box IoU最大的ground truth box
         ovmax = np.max(overlaps)
         jmax = np.argmax(overlaps)
 
@@ -205,9 +222,11 @@ def voc_eval(detpath,
   # compute precision recall
   fp = np.cumsum(fp)
   tp = np.cumsum(tp)
+  # 召回率
   rec = tp / float(npos)
   # avoid divide by zero in case the first detection matches a difficult
   # ground truth
+  # 精准率
   prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
   ap = voc_ap(rec, prec, use_07_metric)
 

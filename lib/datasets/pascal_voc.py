@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------
 # Fast R-CNN
 # Copyright (c) 2015 Microsoft
@@ -213,7 +214,11 @@ class pascal_voc(imdb):
           dets = all_boxes[cls_ind][im_ind]
           if dets == []:
             continue
-          # the VOCdevkit expects 1-based indices
+          """
+          the VOCdevkit expects 1-based indices
+          每一行包括一个image中一个predict box的描述。包含image的index，分类的概率，以及坐标描述。
+          为何要加1？
+          """
           for k in range(dets.shape[0]):
             f.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f}\n'.
                     format(index, dets[k, -1],
@@ -240,6 +245,7 @@ class pascal_voc(imdb):
     if not os.path.isdir(output_dir):
       os.mkdir(output_dir)
     for i, cls in enumerate(self._classes):
+      # 求每个类型的ap值，不包含背景。
       if cls == '__background__':
         continue
       filename = self._get_voc_results_file_template().format(cls)
@@ -281,10 +287,12 @@ class pascal_voc(imdb):
     status = subprocess.call(cmd, shell=True)
 
   def evaluate_detections(self, all_boxes, output_dir):
+    # 将all_boxes存储到缓存文件中，一个类一个文件
     self._write_voc_results_file(all_boxes)
     self._do_python_eval(output_dir)
     if self.config['matlab_eval']:
       self._do_matlab_eval(output_dir)
+    # 清理一下缓存文件
     if self.config['cleanup']:
       for cls in self._classes:
         if cls == '__background__':

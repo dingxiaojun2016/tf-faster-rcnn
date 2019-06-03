@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------
 # Tensorflow Faster R-CNN
 # Licensed under The MIT License [see LICENSE for details]
@@ -35,6 +36,7 @@ def _get_image_blob(im):
   im_orig = im.astype(np.float32, copy=True)
   im_orig -= cfg.PIXEL_MEANS
 
+  # 获取图片最大和最小的边长
   im_shape = im_orig.shape
   im_size_min = np.min(im_shape[0:2])
   im_size_max = np.max(im_shape[0:2])
@@ -42,6 +44,7 @@ def _get_image_blob(im):
   processed_ims = []
   im_scale_factors = []
 
+  # 根据要求的最小边长cfg.TEST.SCALES计算需要缩放的大小
   for target_size in cfg.TEST.SCALES:
     im_scale = float(target_size) / float(im_size_min)
     # Prevent the biggest axis from being more than MAX_SIZE
@@ -87,16 +90,24 @@ def im_detect(sess, net, im):
   blobs, im_scales = _get_blobs(im)
   assert len(im_scales) == 1, "Only single-image batch implemented"
 
+  """
+  blobs['data']存储image数据，opencv读取的image为BGR格式。
+  blobs['im_info']存储image描述信息，包括高、宽、缩放大小。
+  """
   im_blob = blobs['data']
   blobs['im_info'] = np.array([im_blob.shape[1], im_blob.shape[2], im_scales[0]], dtype=np.float32)
 
   _, scores, bbox_pred, rois = net.test_image(sess, blobs['data'], blobs['im_info'])
-  
+
+  # 根据缩放系数，恢复一下rois对应到原始图片尺寸
   boxes = rois[:, 1:5] / im_scales[0]
+  # scores保存boxes对应所有类型的概率得分。
   scores = np.reshape(scores, [scores.shape[0], -1])
+  # bbox_pred保存boxes和predict boxes的偏移量
   bbox_pred = np.reshape(bbox_pred, [bbox_pred.shape[0], -1])
   if cfg.TEST.BBOX_REG:
     # Apply bounding-box regression deltas
+    # 根据偏移量计算predict boxes
     box_deltas = bbox_pred
     pred_boxes = bbox_transform_inv(boxes, box_deltas)
     pred_boxes = _clip_boxes(pred_boxes, im.shape)
@@ -153,6 +164,7 @@ def test_net(sess, net, imdb, weights_filename, max_per_image=100, thresh=0.):
     im = cv2.imread(imdb.image_path_at(i))
 
     _t['im_detect'].tic()
+    # 根据模型预测当前图片中所有predict boxes和对应的分类概率
     scores, boxes = im_detect(sess, net, im)
     _t['im_detect'].toc()
 
@@ -165,12 +177,15 @@ def test_net(sess, net, imdb, weights_filename, max_per_image=100, thresh=0.):
       cls_boxes = boxes[inds, j*4:(j+1)*4]
       cls_dets = np.hstack((cls_boxes, cls_scores[:, np.newaxis])) \
         .astype(np.float32, copy=False)
+      # 进行nms缩减相近的boxes
       keep = nms(cls_dets, cfg.TEST.NMS)
       cls_dets = cls_dets[keep, :]
       all_boxes[j][i] = cls_dets
 
     # Limit to max_per_image detections *over all classes*
+    # 限制一张图片最多预测max_per_image个boxes，选取分数最高的max_per_image个。
     if max_per_image > 0:
+      # 获取当前图片所有predict boxes对应类型的分数
       image_scores = np.hstack([all_boxes[j][i][:, -1]
                     for j in range(1, imdb.num_classes)])
       if len(image_scores) > max_per_image:

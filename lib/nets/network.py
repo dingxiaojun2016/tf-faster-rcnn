@@ -657,6 +657,7 @@ class Network(object):
       self._train_summaries.append(var)
 
     if testing:
+      # 由proposal_target_layer._compute_targets函数可知，bbox_pred是经过normalization的，所以需要恢复一下。
       stds = np.tile(np.array(cfg.TRAIN.BBOX_NORMALIZE_STDS), (self._num_classes))
       means = np.tile(np.array(cfg.TRAIN.BBOX_NORMALIZE_MEANS), (self._num_classes))
       self._predictions["bbox_pred"] *= stds

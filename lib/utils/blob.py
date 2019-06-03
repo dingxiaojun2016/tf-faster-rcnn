@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------
 # Fast R-CNN
 # Copyright (c) 2015 Microsoft
@@ -18,6 +19,9 @@ def im_list_to_blob(ims):
   """Convert a list of images into a network input.
 
   Assumes images are already prepared (means subtracted, BGR order, ...).
+  """
+  """
+  blob将所有的image的尺寸保持一致，用0来填充空数据。
   """
   max_shape = np.array([im.shape for im in ims]).max(axis=0)
   num_images = len(ims)

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------
 # Tensorflow Faster R-CNN
 # Licensed under The MIT License [see LICENSE for details]
@@ -78,6 +79,7 @@ if __name__ == '__main__':
 
   tag = args.tag
   tag = tag if tag else 'default'
+  # filename ckpt文件的文件名，不包含“.ckpt”后缀
   filename = tag + '/' + filename
 
   imdb = get_imdb(args.imdb_name)
