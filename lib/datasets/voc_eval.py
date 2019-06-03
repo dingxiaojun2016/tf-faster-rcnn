@@ -57,22 +57,24 @@ def voc_ap(rec, prec, use_07_metric=False):
     # correct AP calculation
     # first append sentinel values at the end
     """
-    PASCAL VOC CHALLENGE自2010年后就换了另一种计算方法。新的计算方法假设这N个样本中有M个正例，那么我们会得到M个recall值（1/M,
-    2/M, ..., M/M）,对于每个recall值r，我们可以计算出对应（r' > r）的最大precision，然后对这M个precision值取平均即得到最后的
-    AP值。
+    PASCAL VOC CHALLENGE自2010年后就换了另一种计算方法。新的计算方法是计算PR曲线的面积大小。
+    将area under PR curve按precision 和recall形成的柱形图的面积做近似计算即可。
     """
     mrec = np.concatenate(([0.], rec, [1.]))
     mpre = np.concatenate(([0.], prec, [0.]))
 
     # compute the precision envelope
+    # 划分所有柱形图的顶
     for i in range(mpre.size - 1, 0, -1):
       mpre[i - 1] = np.maximum(mpre[i - 1], mpre[i])
 
     # to calculate area under PR curve, look for points
     # where X axis (recall) changes value
+    # 划分所有柱形图的宽
     i = np.where(mrec[1:] != mrec[:-1])[0]
 
     # and sum (\Delta recall) * prec
+    # 根据柱形图的顶和宽计算总面积
     ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
   return ap
 
@@ -114,6 +116,7 @@ def voc_eval(detpath,
   计算当前classname对应的class的AP值。
   具体计算过程的解释见如下链接：
   https://blog.csdn.net/qq_41994006/article/details/81051150
+  但是本代码中发现计算voc 2010之后的AP值是计算PR曲线下面的面积大小，跟上述博客介绍的有点区别。
   """
 
   # first load gt
