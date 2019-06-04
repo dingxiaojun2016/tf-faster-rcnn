@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python
 
 # --------------------------------------------------------
@@ -82,6 +83,7 @@ def demo(sess, net, image_name):
     # Detect all object classes and regress object bounds
     timer = Timer()
     timer.tic()
+    # 使用已经训练好的网络模型检测当前图片中所有的物体，得到所有predict boxes
     scores, boxes = im_detect(sess, net, im)
     timer.toc()
     print('Detection took {:.3f}s for {:d} object proposals'.format(timer.total_time, boxes.shape[0]))
@@ -90,6 +92,10 @@ def demo(sess, net, image_name):
     CONF_THRESH = 0.8
     NMS_THRESH = 0.3
     for cls_ind, cls in enumerate(CLASSES[1:]):
+        """
+        对于每个类，找到对应的predict boxes的概率得分和坐标描述，先进行nms缩减相近的boxes，对于保留的boxes，当概率得分大于CONF_THRESH
+        阈值时，通过vis_detections函数将box画出来。
+        """
         cls_ind += 1 # because we skipped background
         cls_boxes = boxes[:, 4*cls_ind:4*(cls_ind + 1)]
         cls_scores = scores[:, cls_ind]

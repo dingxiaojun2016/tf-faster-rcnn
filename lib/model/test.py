@@ -115,6 +115,11 @@ def im_detect(sess, net, im):
     # Simply repeat the boxes, once for each class
     pred_boxes = np.tile(boxes, (1, scores.shape[1]))
 
+  """
+  假设有N类，本次检测由M个rois，则：
+  scores shape为(M, N)
+  pred_boxes shape为(M, N*4)
+  """
   return scores, pred_boxes
 
 def apply_nms(all_boxes, thresh):
