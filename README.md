@@ -6,6 +6,8 @@
 [fast r-cnn介绍](https://app.yinxiang.com/fx/ee1e839e-7bf3-42aa-98ee-07c22795c301)<br>
 [faster r-cnn介绍](https://app.yinxiang.com/fx/c55dc112-ef95-44cc-b71d-d666c17ad533)<br>
 [目标检测评估指标P-R曲线](https://app.yinxiang.com/fx/7dfdfd4e-5470-488a-8ab8-f1897f127b8c)
+# 目录架构
+ ![](data/imgs/%E7%9B%AE%E5%BD%95%E6%9E%B6%E6%9E%84.png)
 
 # tf-faster-rcnn is deprecated:
 For a good and more up-to-date implementation for faster/mask RCNN with multi-gpu support, please see the example in TensorPack [here](https://github.com/tensorpack/tensorpack/tree/master/examples/FasterRCNN).
