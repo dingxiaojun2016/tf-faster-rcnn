@@ -1,5 +1,12 @@
 # 目的
 为了学习以及分享个人学习心得，会在该仓库中添加一些的readme说明以及代码注释进行模块讲解和代码分析（可以看下提交记录），以及实际训练和测试过程。个人拓展说明放在原作者README.md最后[个人学习和实践记录](https://github.com/zhaocc1106/tf-faster-rcnn#%E4%B8%AA%E4%BA%BA%E5%AD%A6%E4%B9%A0%E5%92%8C%E5%AE%9E%E8%B7%B5%E8%AE%B0%E5%BD%95) 。
+# 笔记整理，从r-cnn到faster r-cnn
+[r-cnn](https://app.yinxiang.com/shard/s15/nl/18613554/39546d17-6590-4932-810a-d74d46a07a91)<br>
+[spp](https://app.yinxiang.com/shard/s15/nl/18613554/ae21b5a6-56e4-4dbc-972c-69927e95e8b3)<br>
+[fast r-cnn](https://app.yinxiang.com/shard/s15/nl/18613554/ee1e839e-7bf3-42aa-98ee-07c22795c301)<br>
+[faster r-cnn](https://app.yinxiang.com/shard/s15/nl/18613554/c55dc112-ef95-44cc-b71d-d666c17ad533)<br>
+[目标检测评估指标P-R曲线](https://app.yinxiang.com/shard/s15/nl/18613554/7dfdfd4e-5470-488a-8ab8-f1897f127b8c)
+
 # tf-faster-rcnn is deprecated:
 For a good and more up-to-date implementation for faster/mask RCNN with multi-gpu support, please see the example in TensorPack [here](https://github.com/tensorpack/tensorpack/tree/master/examples/FasterRCNN).
 
