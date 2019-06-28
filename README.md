@@ -252,7 +252,7 @@ For convenience, here is the faster RCNN citation:
 ## 目录架构
  ![](data/imgs/%E7%9B%AE%E5%BD%95%E6%9E%B6%E6%9E%84.png)
 ## 开发环境
-ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.1
+ubuntu18.04+GeForce GTX 1070+anaconda2(python2.7)+cuda10.0
 ## IDE
 使用pycharm，为了查看代码和运行方便，我把原作者的代码架构改成了pycharm工程，直接使用pycharm打开根目录即可。
 ## 实践过程
